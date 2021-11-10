@@ -96,13 +96,17 @@ void TYPED(initHashTable)(TYPED(HashTable)* table) {
     table->count = 0;
     table->keys = NULL;
     table->values = NULL;
+#ifndef IMPLICIT_STATE
     table->state = NULL;
+#endif
 }
 
 void TYPED(deinitHashTable)(TYPED(HashTable)* table) {
     FREE(table->keys);
     FREE(table->values);
+#ifndef IMPLICIT_STATE
     FREE(table->state);
+#endif
     TYPED(initHashTable)(table);
 }
 

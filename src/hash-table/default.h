@@ -48,19 +48,19 @@
 /* #define IMPLICIT_STATE */
 #ifdef IMPLICIT_STATE
 #ifndef IS_EMPTY
-#define IS_EMPTY(KEY, VALUE) (KEY == (void*)0)
+#define IS_EMPTY(K, V) (K == (KEY)0)
 #endif
 #ifndef IS_DELETED
-#define IS_DELETED(KEY, VALUE) (KEY == (void*)1)
+#define IS_DELETED(K, V) (K == (KEY)1)
 #endif
 #ifndef IS_VALID
 #define IS_VALID(KEY, VALUE) (!IS_EMPTY(KEY, VALUE) && !IS_DELETED(KEY, VALUE))
 #endif
 #ifndef SET_EMPTY
-#define SET_EMPTY(KEY, VALUE) (KEY = (void*)0)
+#define SET_EMPTY(K, V) (K = (KEY)0)
 #endif
 #ifndef SET_DELETED
-#define SET_DELETED(KEY, VALUE) (KEY = (void*)1)
+#define SET_DELETED(K, V) (K = (KEY)1)
 #endif
 #endif
 

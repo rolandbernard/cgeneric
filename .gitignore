@@ -2,6 +2,7 @@
 .vscode
 .vim*
 compile_flags.txt
+build/
 
 # Prerequisites
 *.d

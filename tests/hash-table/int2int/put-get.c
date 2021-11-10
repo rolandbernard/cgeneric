@@ -1,0 +1,23 @@
+// test:
+
+#include <assert.h>
+
+#define TYPED(NAME) NAME ## Test
+
+#include "hash.c"
+#include "hash-table/hash-table.c"
+
+int main() {
+    HashTableTest map;
+    initHashTableTest(&map);
+    for (int i = 0; i < 1000; i++) {
+        putInHashTableTest(&map, i, 2*i);
+        assert(sizeOfHashTableTest(&map) == (size_t)i + 1);
+    }
+    for (int i = 0; i < 1000; i++) {
+        int val = getFromHashTableTest(&map, i);
+        assert(val == 2*i);
+    }
+    deinitHashTableTest(&map);
+    return 0;
+}

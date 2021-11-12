@@ -50,14 +50,27 @@ void TYPED(heapSort)(TYPE* array, size_t size) {
     }
 }
 
+static void TYPED(medianOfThree)(TYPE* array, size_t left, size_t mid, size_t right) {
+    if (!LESS_EQUAL(array[left], array[right])) {
+        TYPED(swap)(array, left, right);
+    }
+    if (!LESS_EQUAL(array[left], array[mid])) {
+        TYPED(swap)(array, left, mid);
+    }
+    if (!LESS_EQUAL(array[mid], array[right])) {
+        TYPED(swap)(array, mid, right);
+    }
+}
+
 size_t TYPED(partition)(TYPE* array, size_t size) {
-    TYPE pivot = array[0];
+    size_t m = size / 2;
+    TYPED(medianOfThree)(array, 0, m, size - 1);
     size_t i = 1;
-    size_t j = size - 1;
+    size_t j = size - 2;
     while (i <= j) {
-        if (LESS_EQUAL(array[i], pivot)) {
+        if (LESS_EQUAL(array[i], array[m])) {
             i++;
-        } else if (LESS_EQUAL(pivot, array[j])) {
+        } else if (LESS_EQUAL(array[m], array[j])) {
             j--;
         } else {
             TYPED(swap)(array, i, j);
@@ -65,8 +78,13 @@ size_t TYPED(partition)(TYPE* array, size_t size) {
             j--;
         }
     }
-    TYPED(swap)(array, 0, i - 1);
-    return i - 1;
+    if (m < i) {
+        TYPED(swap)(array, m, i - 1);
+        return i - 1;
+    } else {
+        TYPED(swap)(array, m, j + 1);
+        return j + 1;
+    }
 }
 
 static void TYPED(introSort)(TYPE* array, size_t size, size_t depth) {

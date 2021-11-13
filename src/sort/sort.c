@@ -112,3 +112,13 @@ void TYPED(sort)(TYPE* array, size_t size) {
     TYPED(introSort)(array, size, MAX_QUICK_SORT_DEPTH * TYPED(floorLog2)(size));
 }
 
+void TYPED(quickSelect)(TYPE* array, size_t k, size_t size) {
+    if (size > 1) {
+        size_t p = TYPED(partition)(array, size);
+        if (k < p) {
+            TYPED(quickSelect)(array, k, p);
+        } else if (k > p) {
+            TYPED(quickSelect)(array + p + 1, k - p - 1, size - p - 1);
+        }
+    }
+}

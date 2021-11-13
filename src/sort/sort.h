@@ -15,3 +15,5 @@ size_t TYPED(partition)(TYPE* array, size_t size);
 
 void TYPED(sort)(TYPE* array, size_t size);
 
+void TYPED(quickSelect)(TYPE* array, size_t k, size_t size);
+

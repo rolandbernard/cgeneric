@@ -1,5 +1,3 @@
-#ifndef _GENERIC_DEFAULT_H_
-#define _GENERIC_DEFAULT_H_
 
 #undef TYPE
 #undef TYPED
@@ -20,4 +18,3 @@
 
 #include "../alloc-end.h"
 
-#endif

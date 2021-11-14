@@ -1,5 +1,3 @@
-#ifndef _GENERIC_DEFAULT_H_
-#define _GENERIC_DEFAULT_H_
 
 #undef KEY
 #undef VALUE
@@ -22,4 +20,3 @@
 
 #include "../alloc-end.h"
 
-#endif

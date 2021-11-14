@@ -2,6 +2,10 @@
 #include "default.h"
 #include <stddef.h>
 
+TYPE* TYPED(createBit)(size_t size);
+
+void TYPED(initBit)(TYPE* array, size_t size);
+
 void TYPED(addToBit)(TYPE* array, size_t size, size_t i, TYPE v);
 
 void TYPED(removeFromBit)(TYPE* array, size_t size, size_t i, TYPE v);

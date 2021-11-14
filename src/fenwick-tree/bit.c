@@ -3,6 +3,18 @@
 
 #define LSB(N) ((N) & -(N))
 
+TYPE* TYPED(createBit)(size_t size) {
+    TYPE* values = ALLOC(TYPE, size);
+    TYPED(initBit)(values, size);
+    return values;
+}
+
+void TYPED(initBit)(TYPE* array, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        array[i] = ZERO;
+    }
+}
+
 void TYPED(addToBit)(TYPE* array, size_t size, size_t i, TYPE v) {
     while (i < size) {
         array[i] = ADDITION(array[i], v);
@@ -44,4 +56,6 @@ TYPE TYPED(sumOfBitRange)(TYPE* array, size_t from, size_t to) {
         return SUBTRACTION(TYPED(prefixSumInBit)(array, to - 1), TYPED(prefixSumInBit)(array, from - 1));
     }
 }
+
+#undef LSB
 

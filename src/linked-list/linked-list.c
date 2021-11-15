@@ -114,3 +114,20 @@ void TYPED(setInLinkedList)(TYPED(LinkedList)* list, size_t i, TYPE element) {
     }
 }
 
+TYPED(LinkedListIterator) TYPED(getLinkedListIterator)(TYPED(LinkedList)* list) {
+    TYPED(LinkedListIterator) ret = {
+        .elem = list->head,
+    };
+    return ret;
+}
+
+bool TYPED(hasNextLinkedList)(TYPED(LinkedListIterator)* iter) {
+    return iter->elem != NULL;
+}
+
+TYPE TYPED(getNextLinkedList)(TYPED(LinkedListIterator)* iter) {
+    TYPE ret = iter->elem->value;
+    iter->elem = iter->elem->next;
+    return ret;
+}
+

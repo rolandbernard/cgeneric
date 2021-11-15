@@ -1,4 +1,5 @@
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "default.h"
@@ -30,4 +31,17 @@ TYPE TYPED(popFromArrayList)(TYPED(ArrayList)* list);
 TYPE TYPED(getFromArrayList)(TYPED(ArrayList)* list, size_t i);
 
 void TYPED(setInArrayList)(TYPED(ArrayList)* list, size_t i, TYPE element);
+
+typedef struct TYPED(ArrayListIterator) TYPED(ArrayListIterator);
+
+struct TYPED(ArrayListIterator) {
+    TYPED(ArrayList)* list;
+    size_t i;
+};
+
+TYPED(ArrayListIterator) TYPED(getArrayListIterator)(TYPED(ArrayList)* list);
+
+bool TYPED(hasNextArrayList)(TYPED(ArrayListIterator)* iter);
+
+TYPE TYPED(getNextArrayList)(TYPED(ArrayListIterator)* iter);
 

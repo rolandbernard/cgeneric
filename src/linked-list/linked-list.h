@@ -1,5 +1,6 @@
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "default.h"
 
@@ -35,4 +36,16 @@ TYPE TYPED(popFrontFromLinkedList)(TYPED(LinkedList)* list);
 TYPE TYPED(getFromLinkedList)(TYPED(LinkedList)* list, size_t i);
 
 void TYPED(setInLinkedList)(TYPED(LinkedList)* list, size_t i, TYPE element);
+
+typedef struct TYPED(LinkedListIterator) TYPED(LinkedListIterator);
+
+struct TYPED(LinkedListIterator) {
+    TYPED(LinkedListElement)* elem;
+};
+
+TYPED(LinkedListIterator) TYPED(getLinkedListIterator)(TYPED(LinkedList)* list);
+
+bool TYPED(hasNextLinkedList)(TYPED(LinkedListIterator)* iter);
+
+TYPE TYPED(getNextLinkedList)(TYPED(LinkedListIterator)* iter);
 

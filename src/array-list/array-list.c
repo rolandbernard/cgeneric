@@ -74,3 +74,21 @@ void TYPED(setInArrayList)(TYPED(ArrayList)* list, size_t i, TYPE element) {
     list->data[i] = element;
 }
 
+TYPED(ArrayListIterator) TYPED(getArrayListIterator)(TYPED(ArrayList)* list) {
+    TYPED(ArrayListIterator) ret = {
+        .list = list,
+        .i = 0,
+    };
+    return ret;
+}
+
+bool TYPED(hasNextArrayList)(TYPED(ArrayListIterator)* iter) {
+    return iter->i < iter->list->count;
+}
+
+TYPE TYPED(getNextArrayList)(TYPED(ArrayListIterator)* iter) {
+    TYPE ret = iter->list->data[iter->i];
+    iter->i++;
+    return ret;
+}
+

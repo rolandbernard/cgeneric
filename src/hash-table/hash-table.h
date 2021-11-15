@@ -24,11 +24,31 @@ size_t TYPED(sizeOfHashTable)(TYPED(HashTable)* table);
 
 void TYPED(reserveHashTable)(TYPED(HashTable)* table, size_t size);
 
-void TYPED(putInHashTable)(TYPED(HashTable)* table, KEY key, VALUE value);
+bool TYPED(putInHashTable)(TYPED(HashTable)* table, KEY key, VALUE value);
 
 VALUE TYPED(getFromHashTable)(TYPED(HashTable)* table, KEY key);
 
 bool TYPED(hasInHashTable)(TYPED(HashTable)* table, KEY key);
 
 void TYPED(deleteFromHashTable)(TYPED(HashTable)* table, KEY key);
+
+typedef struct TYPED(HashTableIterator) TYPED(HashTableIterator);
+
+typedef struct TYPED(HashTableEntry) TYPED(HashTableEntry);
+
+struct TYPED(HashTableIterator) {
+    TYPED(HashTable)* table;
+    size_t i;
+};
+
+struct TYPED(HashTableEntry) {
+    KEY key;
+    VALUE value;
+};
+
+TYPED(HashTableIterator) TYPED(getHashTableIterator)(TYPED(HashTable)* table);
+
+bool TYPED(hasNextHashTable)(TYPED(HashTableIterator)* iter);
+
+TYPED(HashTableEntry) TYPED(getNextHashTable)(TYPED(HashTableIterator)* iter);
 

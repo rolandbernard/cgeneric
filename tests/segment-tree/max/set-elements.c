@@ -23,7 +23,7 @@ int simpleSum(size_t i, size_t j) {
     
 int main() {
     int* tree = createSegmentTreeInt(N);
-    for (size_t i = 0; i < 25*N; i++) {
+    for (size_t i = 0; i < 5*N; i++) {
         size_t idx = rand() % N;
         flat[idx] = rand();
         setInSegmentTreeInt(tree, N, idx, flat[idx]);

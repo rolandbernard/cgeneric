@@ -113,7 +113,7 @@ void TYPED(reserveHashSet)(TYPED(HashSet)* set, size_t size) {
     }
 }
 
-void TYPED(insertIntoHashSet)(TYPED(HashSet)* set, TYPE key) {
+bool TYPED(insertIntoHashSet)(TYPED(HashSet)* set, TYPE key) {
     TYPED(tryResizingHashSet)(set);
     size_t idx = TYPED(findIndexHashSet)(set, key);
     if (!TYPED(isIndexValid)(set, idx)) {
@@ -123,6 +123,9 @@ void TYPED(insertIntoHashSet)(TYPED(HashSet)* set, TYPE key) {
         set->state[idx] = VALID;
 #endif
         set->count++;
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -149,6 +152,30 @@ void TYPED(deleteFromHashSet)(TYPED(HashSet)* set, TYPE key) {
             TYPED(tryResizingHashSet)(set);
         }
     }
+}
+
+TYPED(HashSetIterator) TYPED(getHashSetIterator)(TYPED(HashSet)* set) {
+    TYPED(HashSetIterator) ret = {
+       .set = set,
+       .i = 0,
+    };
+    return ret;
+}
+
+bool TYPED(hasNextHashSet)(TYPED(HashSetIterator)* iter) {
+    while (iter->i < iter->set->capacity && !TYPED(isIndexValid)(iter->set, iter->i)) {
+        iter->i++;
+    }
+    return iter->i < iter->set->capacity && TYPED(isIndexValid)(iter->set, iter->i);
+}
+
+TYPE TYPED(getNextHashSet)(TYPED(HashSetIterator)* iter) {
+    while (iter->i < iter->set->capacity && !TYPED(isIndexValid)(iter->set, iter->i)) {
+        iter->i++;
+    }
+    TYPE ret = iter->set->keys[iter->i];
+    iter->i++;
+    return ret;
 }
 
 #undef EMPTY

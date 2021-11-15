@@ -120,11 +120,12 @@ void TYPED(reserveHashTable)(TYPED(HashTable)* table, size_t size) {
     }
 }
 
-void TYPED(putInHashTable)(TYPED(HashTable)* table, KEY key, VALUE value) {
+bool TYPED(putInHashTable)(TYPED(HashTable)* table, KEY key, VALUE value) {
     TYPED(tryResizingHashTable)(table);
     size_t idx = TYPED(findIndexHashTable)(table, key);
     if (TYPED(isIndexValid)(table, idx)) {
         table->values[idx] = value;
+        return false;
     } else {
         idx = TYPED(insertIndexHashTable)(table, key);
         table->keys[idx] = key;
@@ -133,6 +134,7 @@ void TYPED(putInHashTable)(TYPED(HashTable)* table, KEY key, VALUE value) {
         table->state[idx] = VALID;
 #endif
         table->count++;
+        return true;
     }
 }
 
@@ -170,6 +172,33 @@ void TYPED(deleteFromHashTable)(TYPED(HashTable)* table, KEY key) {
             TYPED(tryResizingHashTable)(table);
         }
     }
+}
+
+TYPED(HashTableIterator) TYPED(getHashTableIterator)(TYPED(HashTable)* table) {
+    TYPED(HashTableIterator) ret = {
+       .table = table,
+       .i = 0,
+    };
+    return ret;
+}
+
+bool TYPED(hasNextHashTable)(TYPED(HashTableIterator)* iter) {
+    while (iter->i < iter->table->capacity && !TYPED(isIndexValid)(iter->table, iter->i)) {
+        iter->i++;
+    }
+    return iter->i < iter->table->capacity && TYPED(isIndexValid)(iter->table, iter->i);
+}
+
+TYPED(HashTableEntry) TYPED(getNextHashTable)(TYPED(HashTableIterator)* iter) {
+    while (iter->i < iter->table->capacity && !TYPED(isIndexValid)(iter->table, iter->i)) {
+        iter->i++;
+    }
+    TYPED(HashTableEntry) ret = {
+        .key = iter->table->keys[iter->i],
+        .value = iter->table->values[iter->i],
+    };
+    iter->i++;
+    return ret;
 }
 
 #undef EMPTY

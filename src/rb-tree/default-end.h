@@ -1,7 +1,8 @@
 
 #undef TYPE
 #undef TYPED
-#undef LESS_EQUAL
+#undef LESS_THAN
+#undef IS_SET
 
 #include "../alloc-end.h"
 

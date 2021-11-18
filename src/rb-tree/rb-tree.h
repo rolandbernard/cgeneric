@@ -33,7 +33,7 @@ void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element);
 
 bool TYPED(hasInRBTree)(TYPED(RBTree)* tree, TYPE element);
 
-void TYPED(removeFromRBTree)(TYPED(RBTree)* tree, TYPE* elements);
+void TYPED(deleteFromRBTree)(TYPED(RBTree)* tree, TYPE element);
 
 typedef struct TYPED(RBTreeIterator) TYPED(RBTreeIterator);
 

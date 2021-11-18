@@ -29,7 +29,7 @@ void TYPED(deinitRBTree)(TYPED(RBTree)* tree) {
 
 static size_t TYPED(countRBTreeNodes)(TYPED(RBTreeNode)* node) {
     if (node != NULL) {
-        return TYPED(countRBTreeNodes)(node->child[LEFT])
+        return 1 + TYPED(countRBTreeNodes)(node->child[LEFT])
                + TYPED(countRBTreeNodes)(node->child[RIGHT]);
     } else {
         return 0;
@@ -58,14 +58,16 @@ TYPE TYPED(lastRBTree)(TYPED(RBTree)* tree) {
 
 bool TYPED(hasInRBTree)(TYPED(RBTree)* tree, TYPE element) {
     TYPED(RBTreeNode)* c = tree->root;
-    while (c != NULL && c->value != element) {
-        if (LESS_EQUAL(c->value, element)) {
+    while (c != NULL) {
+        if (LESS_THAN(c->value, element)) {
             c = c->child[LEFT];
-        } else {
+        } else if (LESS_THAN(element, c->value)) {
             c = c->child[RIGHT];
+        } else {
+            return true;
         }
     }
-    return c != NULL && c->value == element;
+    return false;
 }
 
 static void TYPED(rotateRBTree)(TYPED(RBTree)* tree, TYPED(RBTreeNode)* root, int dir) {
@@ -88,52 +90,64 @@ static void TYPED(rotateRBTree)(TYPED(RBTree)* tree, TYPED(RBTreeNode)* root, in
 
 static void TYPED(insertRebalanceRBTree)(TYPED(RBTree)* tree, TYPED(RBTreeNode)* inserted) {
     TYPED(RBTreeNode)* c = inserted;
-    do {
-        if (c->parent == NULL || c->parent->color == BLACK) {
+    while (c->parent != NULL) {
+        TYPED(RBTreeNode)* p = c->parent;
+        if (p->color == BLACK) {
             return;
         }
-        if (c->parent->parent == NULL) {
-            c->parent->color = BLACK;
+        if (p->parent == NULL) {
+            p->color = BLACK;
             return;
         }
-        int dir = c->parent->parent->child[LEFT] == c->parent ? LEFT : RIGHT;
-        TYPED(RBTreeNode)* u = c->parent->parent->child[1 - dir];
+        TYPED(RBTreeNode)* g = p->parent;
+        int dir = g->child[LEFT] == p ? LEFT : RIGHT;
+        TYPED(RBTreeNode)* u = g->child[1 - dir];
         if (u == NULL || u->color == BLACK) {
-            if (c == c->parent->child[1 - dir]) {
-                c = c->parent;
-                TYPED(rotateRBTree)(tree, c, dir);
+            if (c == p->child[1 - dir]) {
+                TYPED(rotateRBTree)(tree, p, dir);
+                c = p;
+                p = g->child[dir];
             }
-            c->parent->parent->color = RED;
-            c->parent->color = BLACK;
-            TYPED(rotateRBTree)(tree, c->parent->parent, 1 - dir);
+            TYPED(rotateRBTree)(tree, g, 1 - dir);
+            p->color = BLACK;
+            g->color = RED;
             return;
         }
-        c->parent->color = BLACK;
+        p->color = BLACK;
         u->color = BLACK;
-        c->parent->parent->color = RED;
-        c = c->parent->parent;
-    } while (c->parent != NULL);
+        g->color = RED;
+        c = g;
+    }
 }
 
 void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element) {
-    TYPED(RBTreeNode)* p = NULL;
-    TYPED(RBTreeNode)* c = tree->root;
-    int dir = 0;
-    while (c != NULL) {
-        p = c;
-        if (LESS_EQUAL(c->value, element)) {
-            c = c->child[LEFT];
-            dir = LEFT;
-        } else {
-            c = c->child[RIGHT];
-            dir = RIGHT;
-        }
-    }
-    if (p == NULL) {
+    if (tree->root == NULL) {
         tree->root = ZALLOC(TYPED(RBTreeNode), 1);
         tree->root->color = RED;
         tree->root->value = element;
     } else {
+        TYPED(RBTreeNode)* p = NULL;
+        TYPED(RBTreeNode)* c = tree->root;
+        int dir = 0;
+        while (c != NULL) {
+            p = c;
+            if (LESS_THAN(c->value, element)) {
+                c = c->child[LEFT];
+                dir = LEFT;
+#ifdef IS_SET
+            } else if (LESS_THAN(element, c->value)) {
+                c = c->child[RIGHT];
+                dir = RIGHT;
+            } else {
+                return;
+            }
+#else
+            } else {
+                c = c->child[RIGHT];
+                dir = RIGHT;
+            }
+#endif
+        }
         p->child[dir] = ZALLOC(TYPED(RBTreeNode), 1);
         p->child[dir]->color = RED;
         p->child[dir]->parent = p;
@@ -142,8 +156,116 @@ void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element) {
     }
 }
 
-void TYPED(removeFromRBTree)(TYPED(RBTree)* tree, TYPE* elements) {
-    // TODO
+static TYPED(RBTreeNode)* TYPED(replacementForRBTreeNode)(TYPED(RBTreeNode)* node) {
+    if (node->child[LEFT] != NULL && node->child[RIGHT] != NULL) {
+        TYPED(RBTreeNode)* c = node->child[RIGHT];
+        while (c->child[LEFT] != NULL) {
+            c = c->child[LEFT];
+        }
+        return c;
+    } else if (node->child[LEFT] == NULL && node->child[RIGHT] == NULL) {
+        return NULL;
+    } else if (node->child[LEFT] != NULL) {
+        return node->child[LEFT];
+    } else {
+        return node->child[RIGHT];
+    }
+}
+
+static void TYPED(fixDoubleBlackRBTreeNode)(TYPED(RBTree)* tree, TYPED(RBTreeNode)* node) {
+    while (node != tree->root) {
+        int dir = node->parent->child[LEFT] == node ? LEFT : RIGHT;
+        TYPED(RBTreeNode)* sibling = node->parent->child[1 - dir];
+        if (sibling == NULL) {
+            node = node->parent;
+        } else if (sibling->color == RED) {
+            node->parent->color = RED;
+            sibling->color = BLACK;
+            TYPED(rotateRBTree)(tree, node->parent, dir);
+        } else if (
+            (sibling->child[LEFT] != NULL && sibling->child[LEFT]->color == RED)
+            || (sibling->child[RIGHT] != NULL && sibling->child[RIGHT]->color == RED)
+        ) {
+            if (sibling->child[dir] != NULL && sibling->child[dir]->color == RED) {
+                sibling->child[dir]->color = node->parent->color;
+                TYPED(rotateRBTree)(tree, sibling, 1 - dir);
+                TYPED(rotateRBTree)(tree, node->parent, dir);
+            } else {
+                sibling->child[1 - dir]->color = sibling->color;
+                sibling->color = node->parent->color;
+                TYPED(rotateRBTree)(tree, node->parent, dir);
+            }
+            node->parent->color = BLACK;
+            return;
+        } else {
+            sibling->color = RED;
+            if (node->parent->color == BLACK) {
+                node = node->parent;
+            } else {
+                node->parent->color = BLACK;
+                return;
+            }
+        }
+    }
+}
+
+static void TYPED(removeRBTreeNode)(TYPED(RBTree)* tree, TYPED(RBTreeNode)* node) {
+    TYPED(RBTreeNode)* rep = TYPED(replacementForRBTreeNode)(node);
+    bool bothBlack = (rep == NULL || rep->color == BLACK) && node->color == BLACK;
+    if (rep == NULL) {
+        if (node == tree->root) {
+            tree->root = NULL;
+        } else {
+            int dir = node->parent->child[LEFT] == node ? LEFT : RIGHT;
+            if (bothBlack) {
+                TYPED(fixDoubleBlackRBTreeNode)(tree, node);
+            } else if (node->parent->child[1 - dir] != NULL) {
+                node->parent->child[1 - dir]->color = RED;
+            }
+            node->parent->child[dir] = NULL;
+        }
+        FREE(node);
+    } else if (node->child[LEFT] == NULL || node->child[RIGHT] == NULL) {
+        if (node == tree->root) {
+            node->value = rep->value;
+            node->child[LEFT] = NULL;
+            node->child[RIGHT] = NULL;
+            FREE(rep);
+        } else {
+            int dir = node->parent->child[LEFT] == node ? LEFT : RIGHT;
+            node->parent->child[dir] = rep;
+            rep->parent = node->parent;
+            FREE(node);
+            if (bothBlack) {
+                TYPED(fixDoubleBlackRBTreeNode)(tree, rep);
+            } else {
+                rep->color = BLACK;
+            }
+        }
+    } else {
+        TYPE tmp = rep->value;
+        rep->value = node->value;
+        node->value = tmp;
+        TYPED(removeRBTreeNode)(tree, rep);
+    }
+}
+
+void TYPED(deleteFromRBTree)(TYPED(RBTree)* tree, TYPE element) {
+    if (tree->root != NULL) {
+        TYPED(RBTreeNode)* c = tree->root;
+        while (c != NULL) {
+            if (LESS_THAN(c->value, element)) {
+                c = c->child[LEFT];
+            } else if (LESS_THAN(element, c->value)) {
+                c = c->child[RIGHT];
+            } else {
+                break;
+            }
+        }
+        if (c != NULL) {
+            TYPED(removeRBTreeNode)(tree, c);
+        }
+    }
 }
 
 TYPED(RBTreeIterator) TYPED(getRBTreeIterator)(TYPED(RBTree)* tree) {

@@ -9,8 +9,10 @@
 #define TYPED(NAME) NAME ## Int
 #endif
 
-#ifndef LESS_EQUAL
+#ifndef LESS_THAN
 #include <string.h>
-#define LESS_EQUAL(FIRST, SECOND) (memcmp(&FIRST, &SECOND, sizeof(FIRST)) <= 0)
+#define LESS_THAN(FIRST, SECOND) (memcmp(&FIRST, &SECOND, sizeof(FIRST)) < 0)
 #endif
+
+// #define IS_SET
 

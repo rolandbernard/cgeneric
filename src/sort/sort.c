@@ -1,4 +1,6 @@
 
+#include <string.h>
+
 #include "sort.h"
 
 void TYPED(swap)(TYPE* array, size_t i, size_t j) {
@@ -50,6 +52,29 @@ void TYPED(heapSort)(TYPE* array, size_t size) {
     }
 }
 
+size_t TYPED(partition)(TYPE* array, size_t k, size_t size) {
+    size_t i = 0;
+    size_t j = size - 1;
+    while (i <= j) {
+        if (LESS_EQUAL(array[i], array[k])) {
+            i++;
+        } else if (LESS_EQUAL(array[k], array[j])) {
+            j--;
+        } else {
+            TYPED(swap)(array, i, j);
+            i++;
+            j--;
+        }
+    }
+    if (k < i) {
+        TYPED(swap)(array, k, i - 1);
+        return i - 1;
+    } else {
+        TYPED(swap)(array, k, j + 1);
+        return j + 1;
+    }
+}
+
 static void TYPED(medianOfThree)(TYPE* array, size_t left, size_t mid, size_t right) {
     if (!LESS_EQUAL(array[left], array[right])) {
         TYPED(swap)(array, left, right);
@@ -62,38 +87,25 @@ static void TYPED(medianOfThree)(TYPE* array, size_t left, size_t mid, size_t ri
     }
 }
 
-size_t TYPED(partition)(TYPE* array, size_t size) {
-    size_t m = size / 2;
-    TYPED(medianOfThree)(array, 0, m, size - 1);
-    size_t i = 1;
-    size_t j = size - 2;
-    while (i <= j) {
-        if (LESS_EQUAL(array[i], array[m])) {
-            i++;
-        } else if (LESS_EQUAL(array[m], array[j])) {
-            j--;
-        } else {
-            TYPED(swap)(array, i, j);
-            i++;
-            j--;
-        }
-    }
-    if (m < i) {
-        TYPED(swap)(array, m, i - 1);
-        return i - 1;
+void TYPED(quickSort)(TYPE* array, size_t size) {
+    if (size <= MAX_INSERT_SORT) {
+        TYPED(insertionSort)(array, size);
     } else {
-        TYPED(swap)(array, m, j + 1);
-        return j + 1;
+        TYPED(medianOfThree)(array, 0, size / 2, size - 1);
+        size_t p = TYPED(partition)(array, size / 2, size);
+        TYPED(quickSort)(array, p);
+        TYPED(quickSort)(array + p + 1, size - 1 - p);
     }
 }
 
 static void TYPED(introSort)(TYPE* array, size_t size, size_t depth) {
-    if (size < MAX_INSERT_SORT) {
+    if (size <= MAX_INSERT_SORT) {
         TYPED(insertionSort)(array, size);
     } else if (depth == 0) {
         TYPED(heapSort)(array, size);
     } else {
-        size_t p = TYPED(partition)(array, size);
+        TYPED(medianOfThree)(array, 0, size / 2, size - 1);
+        size_t p = TYPED(partition)(array, size / 2, size);
         TYPED(introSort)(array, p, depth - 1);
         TYPED(introSort)(array + p + 1, size - 1 - p, depth - 1);
     }
@@ -114,7 +126,8 @@ void TYPED(sort)(TYPE* array, size_t size) {
 
 void TYPED(quickSelect)(TYPE* array, size_t k, size_t size) {
     if (size > 1) {
-        size_t p = TYPED(partition)(array, size);
+        TYPED(medianOfThree)(array, 0, size / 2, size - 1);
+        size_t p = TYPED(partition)(array, size / 2, size);
         if (k < p) {
             TYPED(quickSelect)(array, k, p);
         } else if (k > p) {
@@ -122,3 +135,75 @@ void TYPED(quickSelect)(TYPE* array, size_t k, size_t size) {
         }
     }
 }
+
+void TYPED(medianSelect)(TYPE* array, size_t k, size_t size) {
+    if (size > 1) {
+        size_t p = 0; //TYPED(medianPivot)(array, size);
+        p = TYPED(partition)(array, p, size);
+        if (k < p) {
+            TYPED(medianSelect)(array, k, p);
+        } else if (k > p) {
+            TYPED(medianSelect)(array + p + 1, k - p - 1, size - p - 1);
+        }
+    }
+}
+
+static size_t TYPED(smallPivot)(TYPE* array, size_t size) {
+    TYPED(insertionSort)(array, size);
+    return size / 2;
+}
+
+size_t TYPED(medianPivot)(TYPE* array, size_t size) {
+    if (size < 5) {
+        return TYPED(smallPivot)(array, size);
+    } else {
+        for (size_t i = 0; i < size; i += 5) {
+            size_t r = i + 5;
+            if (r > size) {
+                r = size;
+            }
+            size_t median5 = i + TYPED(smallPivot)(array + i, r - i);
+            TYPED(swap)(array, median5, i / 5);
+        }
+        TYPED(medianSelect)(array, size / 10, size / 5);
+        return size / 10;
+    }
+}
+
+static void TYPED(mergeWithBuffer)(TYPE* array, TYPE* buffer, size_t k, size_t size) {
+    memcpy(buffer, array, sizeof(TYPE) * size);
+    size_t i = 0;
+    size_t j = k;
+    for (size_t h = 0; h < size; h++) {
+        if (i < k && (j >= size || LESS_EQUAL(buffer[i], buffer[j]))) {
+            array[h] = buffer[i];
+            i++;
+        } else {
+            array[h] = buffer[j];
+            j++;
+        }
+    }
+}
+
+void TYPED(inplaceMerge)(TYPE* array, size_t k, size_t size) {
+    TYPE* buffer = ALLOC(TYPE, size);
+    TYPED(mergeWithBuffer)(array, buffer, k, size);
+    FREE(buffer);
+}
+
+static void TYPED(mergeSortWithBuffer)(TYPE* array, TYPE* buffer, size_t size) {
+    if (size <= MAX_INSERT_SORT) {
+        TYPED(insertionSort)(array, size);
+    } else {
+        TYPED(mergeSortWithBuffer)(array, buffer, size / 2);
+        TYPED(mergeSortWithBuffer)(array + size / 2, buffer, size - size / 2);
+        TYPED(mergeWithBuffer)(array, buffer, size / 2, size);
+    }
+}
+
+void TYPED(stableSort)(TYPE* array, size_t size) {
+    TYPE* buffer = ALLOC(TYPE, size);
+    TYPED(mergeSortWithBuffer)(array, buffer, size);
+    FREE(buffer);
+}
+

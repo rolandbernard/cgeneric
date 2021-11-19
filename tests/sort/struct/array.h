@@ -6,16 +6,14 @@
 typedef struct {
     long a;
     double b;
-    double c;
+    long i;
 } Test;
 
 bool compareTest(Test a, Test b) {
     if (a.a != b.a) {
         return a.a <= b.a;
-    } else if (a.b != b.b) {
-        return a.b <= b.b;
     } else {
-        return a.c <= b.c;
+        return a.b <= b.b;
     }
 }
 

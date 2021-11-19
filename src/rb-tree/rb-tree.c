@@ -59,9 +59,9 @@ TYPE TYPED(lastRBTree)(TYPED(RBTree)* tree) {
 bool TYPED(hasInRBTree)(TYPED(RBTree)* tree, TYPE element) {
     TYPED(RBTreeNode)* c = tree->root;
     while (c != NULL) {
-        if (LESS_THAN(c->value, element)) {
+        if (LESS_THAN(element, c->value)) {
             c = c->child[LEFT];
-        } else if (LESS_THAN(element, c->value)) {
+        } else if (LESS_THAN(c->value, element)) {
             c = c->child[RIGHT];
         } else {
             return true;
@@ -131,11 +131,11 @@ void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element) {
         int dir = 0;
         while (c != NULL) {
             p = c;
-            if (LESS_THAN(c->value, element)) {
+            if (LESS_THAN(element, c->value)) {
                 c = c->child[LEFT];
                 dir = LEFT;
 #ifdef IS_SET
-            } else if (LESS_THAN(element, c->value)) {
+            } else if (LESS_THAN(c->value, element)) {
                 c = c->child[RIGHT];
                 dir = RIGHT;
             } else {
@@ -254,9 +254,9 @@ void TYPED(deleteFromRBTree)(TYPED(RBTree)* tree, TYPE element) {
     if (tree->root != NULL) {
         TYPED(RBTreeNode)* c = tree->root;
         while (c != NULL) {
-            if (LESS_THAN(c->value, element)) {
+            if (LESS_THAN(element, c->value)) {
                 c = c->child[LEFT];
-            } else if (LESS_THAN(element, c->value)) {
+            } else if (LESS_THAN(c->value, element)) {
                 c = c->child[RIGHT];
             } else {
                 break;

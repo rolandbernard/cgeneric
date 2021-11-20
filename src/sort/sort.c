@@ -105,7 +105,7 @@ static void TYPED(introSort)(TYPE* array, size_t size, size_t depth) {
         TYPED(heapSort)(array, size);
     } else {
         TYPED(medianOfThree)(array, 0, size / 2, size - 1);
-        size_t p = TYPED(partition)(array, size / 2, size);
+        size_t p = TYPED(partition)(array, size / 2, size - 1);
         TYPED(introSort)(array, p, depth - 1);
         TYPED(introSort)(array + p + 1, size - 1 - p, depth - 1);
     }
@@ -171,22 +171,22 @@ size_t TYPED(medianPivot)(TYPE* array, size_t size) {
 }
 
 static void TYPED(mergeWithBuffer)(TYPE* array, TYPE* buffer, size_t k, size_t size) {
-    memcpy(buffer, array, sizeof(TYPE) * size);
+    memcpy(buffer, array, sizeof(TYPE) * k);
     size_t i = 0;
     size_t j = k;
     for (size_t h = 0; h < size; h++) {
-        if (i < k && (j >= size || LESS_EQUAL(buffer[i], buffer[j]))) {
+        if (i < k && (j >= size || LESS_EQUAL(buffer[i], array[j]))) {
             array[h] = buffer[i];
             i++;
         } else {
-            array[h] = buffer[j];
+            array[h] = array[j];
             j++;
         }
     }
 }
 
 void TYPED(inplaceMerge)(TYPE* array, size_t k, size_t size) {
-    TYPE* buffer = ALLOC(TYPE, size);
+    TYPE* buffer = ALLOC(TYPE, k);
     TYPED(mergeWithBuffer)(array, buffer, k, size);
     FREE(buffer);
 }
@@ -202,7 +202,7 @@ static void TYPED(mergeSortWithBuffer)(TYPE* array, TYPE* buffer, size_t size) {
 }
 
 void TYPED(stableSort)(TYPE* array, size_t size) {
-    TYPE* buffer = ALLOC(TYPE, size);
+    TYPE* buffer = ALLOC(TYPE, size / 2);
     TYPED(mergeSortWithBuffer)(array, buffer, size);
     FREE(buffer);
 }

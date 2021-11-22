@@ -1,4 +1,5 @@
 
+#include <stddef.h>
 #include <string.h>
 
 #include "sort.h"
@@ -206,4 +207,27 @@ void TYPED(stableSort)(TYPE* array, size_t size) {
     TYPED(mergeSortWithBuffer)(array, buffer, size);
     FREE(buffer);
 }
+
+#define MAX(A, B) ((A) < (B) ? (B) : (A))
+#define GAP_SEQ(N) MAX((5 * N - 1) / 11, 1)
+
+void TYPED(shellSort)(TYPE* array, size_t size) {
+    size_t gap = size;
+    do {
+        gap = GAP_SEQ(gap);
+        for (size_t offset = 0; offset < gap; offset++) {
+            for (size_t i = offset; i < size; i += gap) {
+                TYPE tmp = array[i];
+                size_t j = i;
+                while (j >= gap && !LESS_EQUAL(array[j - gap], tmp)) {
+                    array[j] = array[j - gap];
+                    j -= gap;
+                }
+                array[j] = tmp;
+            }
+        }
+    } while (gap > 1);
+}
+
+#undef MAX
 

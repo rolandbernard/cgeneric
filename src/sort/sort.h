@@ -27,3 +27,5 @@ void TYPED(inplaceMerge)(TYPE* array, size_t k, size_t size);
 
 void TYPED(stableSort)(TYPE* array, size_t size);
 
+void TYPED(shellSort)(TYPE* array, size_t size);
+

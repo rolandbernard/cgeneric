@@ -1,5 +1,6 @@
 
 #include "default.h"
+#include <stddef.h>
 
 void TYPED(swap)(TYPE* array, size_t i, size_t j);
 
@@ -22,6 +23,10 @@ void TYPED(quickSelect)(TYPE* array, size_t k, size_t size);
 void TYPED(medianSelect)(TYPE* array, size_t k, size_t size);
 
 size_t TYPED(medianPivot)(TYPE* array, size_t size);
+
+size_t TYPED(upperBound)(TYPE* array, size_t size, TYPE value);
+
+size_t TYPED(lowerBound)(TYPE* array, size_t size, TYPE value);
 
 void TYPED(inplaceMerge)(TYPE* array, size_t k, size_t size);
 

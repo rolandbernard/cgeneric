@@ -171,6 +171,34 @@ size_t TYPED(medianPivot)(TYPE* array, size_t size) {
     }
 }
 
+size_t TYPED(upperBound)(TYPE* array, size_t size, TYPE value) {
+    size_t i = 0;
+    size_t j = size;
+    while (i != j) {
+        size_t h = (i + j) / 2;
+        if (!LESS_EQUAL(array[h], value)) {
+            j = h;
+        } else {
+            i = h + 1;
+        }
+    }
+    return i;
+}
+
+size_t TYPED(lowerBound)(TYPE* array, size_t size, TYPE value) {
+    size_t i = 0;
+    size_t j = size;
+    while (i != j) {
+        size_t h = (i + j) / 2;
+        if (LESS_EQUAL(value, array[h])) {
+            j = h;
+        } else {
+            i = h + 1;
+        }
+    }
+    return i;
+}
+
 static void TYPED(mergeWithBuffer)(TYPE* array, TYPE* buffer, size_t k, size_t size) {
     memcpy(buffer, array, sizeof(TYPE) * k);
     size_t i = 0;

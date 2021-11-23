@@ -7,16 +7,16 @@
 #include "sort/sort.c"
 
 int main() {
-    for (size_t i = 0; i < LEN(array1); i++) {
-        array1[i].a = rand() % 100;
-        array1[i].b = array1[i].a;
-        array1[i].i = i;
+    for (size_t i = 0; i < LEN(array2); i++) {
+        array2[i].a = rand() % 100;
+        array2[i].b = array2[i].a;
+        array2[i].i = i;
     }
-    stableSortTest(array1, LEN(array1));
-    for (size_t i = 1; i < LEN(array1); i++) {
-        assert(compareTest(array1[i - 1], array1[i]));
-        if (compareTest(array1[i - 1], array1[i]) && compareTest(array1[i], array1[i - 1])) {
-            assert(array1[i - 1].i < array1[i].i);
+    stableSortTest(array2, LEN(array2));
+    for (size_t i = 1; i < LEN(array2); i++) {
+        assert(compareTest(array2[i - 1], array2[i]));
+        if (compareTest(array2[i - 1], array2[i]) && compareTest(array2[i], array2[i - 1])) {
+            assert(array2[i - 1].i < array2[i].i);
         }
     }
     return 0;

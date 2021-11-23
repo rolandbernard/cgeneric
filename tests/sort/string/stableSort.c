@@ -12,9 +12,9 @@
 #include "array.h"
 
 int main() {
-    stableSortTest(array1, LEN(array1));
-    for (size_t i = 1; i < LEN(array1); i++) {
-        assert(strcmp(array1[i - 1], array1[i]) <= 0);
+    stableSortTest(array2, LEN(array2));
+    for (size_t i = 1; i < LEN(array2); i++) {
+        assert(strcmp(array2[i - 1], array2[i]) <= 0);
     }
     return 0;
 }

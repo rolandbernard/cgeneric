@@ -1,8 +1,12 @@
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
 #include "sort.h"
+
+#define MAX(A, B) ((A) < (B) ? (B) : (A))
+#define MIN(A, B) ((A) > (B) ? (B) : (A))
 
 void TYPED(swap)(TYPE* array, size_t i, size_t j) {
     TYPE tmp = array[i];
@@ -99,7 +103,7 @@ void TYPED(quickSort)(TYPE* array, size_t size) {
     }
 }
 
-static void TYPED(introSort)(TYPE* array, size_t size, size_t depth) {
+static void TYPED(introSortWithDepth)(TYPE* array, size_t size, size_t depth) {
     if (size <= MAX_INSERT_SORT) {
         TYPED(insertionSort)(array, size);
     } else if (depth == 0) {
@@ -107,8 +111,8 @@ static void TYPED(introSort)(TYPE* array, size_t size, size_t depth) {
     } else {
         TYPED(medianOfThree)(array, 0, size / 2, size - 1);
         size_t p = TYPED(partition)(array, size / 2, size - 1);
-        TYPED(introSort)(array, p, depth - 1);
-        TYPED(introSort)(array + p + 1, size - 1 - p, depth - 1);
+        TYPED(introSortWithDepth)(array, p, depth - 1);
+        TYPED(introSortWithDepth)(array + p + 1, size - 1 - p, depth - 1);
     }
 }
 
@@ -121,8 +125,12 @@ static size_t TYPED(floorLog2)(size_t size) {
     return n;
 }
 
+void TYPED(introSort)(TYPE* array, size_t size) {
+    TYPED(introSortWithDepth)(array, size, MAX_QUICK_SORT_DEPTH * TYPED(floorLog2)(size));
+}
+
 void TYPED(sort)(TYPE* array, size_t size) {
-    TYPED(introSort)(array, size, MAX_QUICK_SORT_DEPTH * TYPED(floorLog2)(size));
+    TYPED(introSort)(array, size);
 }
 
 void TYPED(quickSelect)(TYPE* array, size_t k, size_t size) {
@@ -199,24 +207,46 @@ size_t TYPED(lowerBound)(TYPE* array, size_t size, TYPE value) {
     return i;
 }
 
-static void TYPED(mergeWithBuffer)(TYPE* array, TYPE* buffer, size_t k, size_t size) {
-    memcpy(buffer, array, sizeof(TYPE) * k);
-    size_t i = 0;
-    size_t j = k;
-    for (size_t h = 0; h < size; h++) {
-        if (i < k && (j >= size || LESS_EQUAL(buffer[i], array[j]))) {
-            array[h] = buffer[i];
-            i++;
-        } else {
-            array[h] = array[j];
-            j++;
+static void TYPED(performMergeWithBuffer)(TYPE* array, size_t k, size_t size, TYPE* buffer) {
+    if (k <= size - k) {
+        memcpy(buffer, array, sizeof(TYPE) * k);
+        size_t i = 0;
+        size_t j = k;
+        for (size_t h = 0; h < size; h++) {
+            if (i < k && (j >= size || LESS_EQUAL(buffer[i], array[j]))) {
+                array[h] = buffer[i];
+                i++;
+            } else {
+                array[h] = array[j];
+                j++;
+            }
+        }
+    } else {
+        memcpy(buffer, array + k, sizeof(TYPE) * (size - k));
+        size_t i = k;
+        size_t j = size;
+        for (size_t h = size; h > 0;) {
+            h--;
+            if (j > k && (i <= 0 || LESS_EQUAL(array[i - 1], buffer[j - k - 1]))) {
+                j--;
+                array[h] = buffer[j - k];
+            } else {
+                i--;
+                array[h] = array[i];
+            }
         }
     }
 }
 
+static void TYPED(mergeWithBuffer)(TYPE* array, size_t k, size_t size, TYPE* buffer) {
+    size_t from = TYPED(upperBound)(array, k, array[k]);
+    size_t to = k + TYPED(lowerBound)(array + k, size - k, array[k - 1]);
+    TYPED(performMergeWithBuffer)(array + from, k - from, to - from, buffer);
+}
+
 void TYPED(inplaceMerge)(TYPE* array, size_t k, size_t size) {
-    TYPE* buffer = ALLOC(TYPE, k);
-    TYPED(mergeWithBuffer)(array, buffer, k, size);
+    TYPE* buffer = ALLOC(TYPE, MIN(k, size - k));
+    TYPED(mergeWithBuffer)(array, k, size, buffer);
     FREE(buffer);
 }
 
@@ -226,17 +256,20 @@ static void TYPED(mergeSortWithBuffer)(TYPE* array, TYPE* buffer, size_t size) {
     } else {
         TYPED(mergeSortWithBuffer)(array, buffer, size / 2);
         TYPED(mergeSortWithBuffer)(array + size / 2, buffer, size - size / 2);
-        TYPED(mergeWithBuffer)(array, buffer, size / 2, size);
+        TYPED(mergeWithBuffer)(array, size / 2, size, buffer);
     }
 }
 
-void TYPED(stableSort)(TYPE* array, size_t size) {
+void TYPED(mergeSort)(TYPE* array, size_t size) {
     TYPE* buffer = ALLOC(TYPE, size / 2);
     TYPED(mergeSortWithBuffer)(array, buffer, size);
     FREE(buffer);
 }
 
-#define MAX(A, B) ((A) < (B) ? (B) : (A))
+void TYPED(stableSort)(TYPE* array, size_t size) {
+    TYPED(mergeSort)(array, size);
+}
+
 #define GAP_SEQ(N) MAX((5 * N - 1) / 11, 1)
 
 void TYPED(shellSort)(TYPE* array, size_t size) {
@@ -257,5 +290,105 @@ void TYPED(shellSort)(TYPE* array, size_t size) {
     } while (gap > 1);
 }
 
+#undef GAP_SEQ
+
+void TYPED(binaryInsertionSort)(TYPE* array, size_t size) {
+    for (size_t i = 1; i < size; i++) {
+        TYPE tmp = array[i];
+        size_t j = TYPED(upperBound)(array, i, tmp);
+        for (size_t k = i; k > j; k--) {
+            array[k] = array[k - 1];
+        }
+        array[j] = tmp;
+    }
+}
+
+#define STACK_LEN(N) (stack[top - N] - stack[top - 1 - N])
+
+void TYPED(timSort)(TYPE* array, size_t size) {
+    size_t off = MAX(5, TYPED(floorLog2)(size)) - 5;
+    size_t minrun = size >> off;
+    if (((minrun << off) ^ size) != 0) {
+        minrun++;
+    }
+    TYPE* buffer = ALLOC(TYPE, size / 2);
+    size_t* stack = ALLOC(size_t, size / minrun);
+    stack[0] = 0;
+    size_t top = 1;
+    size_t scan = 0;
+    while (scan < size) {
+        size_t start = scan;
+        if (scan + minrun < size) {
+            scan++;
+            if(!LESS_EQUAL(array[scan - 1], array[scan])) {
+                scan++;
+                while (scan < size && !LESS_EQUAL(array[scan - 1], array[scan])) {
+                    scan++;
+                }
+                if (scan - start >= minrun) {
+                    for (size_t i = 0; i < (scan - start) / 2; i++) {
+                        TYPED(swap)(array, start + i, scan - 1 - i);
+                    }
+                }
+            } else {
+                scan++;
+                while (scan < size && LESS_EQUAL(array[scan - 1], array[scan])) {
+                    scan++;
+                }
+            }
+        }
+        if (scan - start < minrun) {
+            scan = MIN(start + minrun, size);
+            TYPED(binaryInsertionSort)(array + start, scan - start);
+        }
+        stack[top] = scan;
+        top++;
+        while (
+            (top > 2 && STACK_LEN(1) >= STACK_LEN(2))
+            || (top > 3 && STACK_LEN(1) + STACK_LEN(2) >= STACK_LEN(3))
+        ) {
+            if (top > 3 && STACK_LEN(3) < STACK_LEN(1)) {
+                top--;
+                size_t off = stack[top - 3];
+                size_t k = stack[top - 2] - off;
+                size_t n = stack[top - 1] - off;
+                TYPED(mergeWithBuffer)(array + off, k, n, buffer);
+                stack[top - 2] = stack[top - 1];
+                stack[top - 1] = stack[top];
+            } else {
+                top--;
+                size_t off = stack[top - 2];
+                size_t k = stack[top - 1] - off;
+                size_t n = stack[top] - off;
+                TYPED(mergeWithBuffer)(array + off, k, n, buffer);
+                stack[top - 1] = stack[top];
+            }
+        }
+    }
+    while (top > 2) {
+        if (top > 3 && STACK_LEN(3) < STACK_LEN(1)) {
+            top--;
+            size_t off = stack[top - 3];
+            size_t k = stack[top - 2] - off;
+            size_t n = stack[top - 1] - off;
+            TYPED(mergeWithBuffer)(array + off, k, n, buffer);
+            stack[top - 2] = stack[top - 1];
+            stack[top - 1] = stack[top];
+        } else {
+            top--;
+            size_t off = stack[top - 2];
+            size_t k = stack[top - 1] - off;
+            size_t n = stack[top] - off;
+            TYPED(mergeWithBuffer)(array + off, k, n, buffer);
+            stack[top - 1] = stack[top];
+        }
+    }
+    FREE(stack);
+    FREE(buffer);
+}
+
+#undef STACK_LEN
+
 #undef MAX
+#undef MIN
 

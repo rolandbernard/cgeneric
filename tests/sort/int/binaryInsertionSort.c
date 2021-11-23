@@ -9,9 +9,9 @@
 #include "array.h"
 
 int main() {
-    stableSortInt(array2, LEN(array2));
-    for (size_t i = 1; i < LEN(array2); i++) {
-        assert(array2[i - 1] <= array2[i]);
+    binaryInsertionSortInt(array1, LEN(array1));
+    for (size_t i = 1; i < LEN(array1); i++) {
+        assert(array1[i - 1] <= array1[i]);
     }
     return 0;
 }

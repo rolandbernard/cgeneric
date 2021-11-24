@@ -19,4 +19,5 @@
 #endif
 
 // #define IS_SET
+// #define BINARY_SEARCH
 

@@ -10,7 +10,7 @@ void TYPED(initBTree)(TYPED(BTree)* tree) {
 
 static void TYPED(freeBTreeNodes)(TYPED(BTreeNode)* node) {
     if (node != NULL) {
-        for (size_t i = 0; i < node->count; i++) {
+        for (size_t i = 0; i <= node->count; i++) {
             TYPED(freeBTreeNodes)(node->child[i]);
         }
         FREE(node);
@@ -96,7 +96,7 @@ static size_t TYPED(positionOfChild)(TYPED(BTreeNode)* parent, TYPED(BTreeNode)*
 #else
     size_t i = 0;
 #endif
-    while (i <= parent->count && parent->child[i] != child) {
+    while (parent != NULL && i <= parent->count && parent->child[i] != child) {
         i++;
     }
     return i;
@@ -114,9 +114,18 @@ static void TYPED(insertIntoBTreeNode)(
             right->child[j] = node->child[node->count / 2 + j];
         }
         right->child[right->count] = node->child[node->count];
+        if (right->child[0] != NULL) {
+            for (size_t j = 0; j <= right->count; j++) {
+                right->child[j]->parent = right;
+            }
+        }
         TYPE median;
         if (at == node->count / 2) {
             median = value;
+            right->child[right->count] = child;
+            if (child != NULL) {
+                child->parent = right;
+            }
         } else if (at < node->count / 2) {
             median = node->values[node->count / 2 - 1];
             for (size_t j = node->count / 2 - 1; j > at;) {

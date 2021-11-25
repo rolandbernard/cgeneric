@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#define LESS_THAN(A, B) A < B
+#define LESS_THAN(A, B) (A < B)
 #define TYPED(NAME) NAME ## Test
 
 #include "rb-tree/rb-tree.c"

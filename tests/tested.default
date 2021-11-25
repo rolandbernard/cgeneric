@@ -4,7 +4,7 @@ run: %.out
 cleanup: rm %.out
 
 buildtime: < 10s
-time: < 2s
+time: < 10s
 exit: = 0
 stderr: = 
 

@@ -32,6 +32,10 @@ void noRedRed(TYPED(RBTreeNode)* node) {
         }
         noRedRed(node->child[LEFT]);
         noRedRed(node->child[RIGHT]);
+        assert(node->child[LEFT] == NULL || node->child[LEFT]->parent == node);
+        assert(node->child[LEFT] == NULL || !LESS_THAN(node->value, node->child[LEFT]->value));
+        assert(node->child[RIGHT] == NULL || node->child[RIGHT]->parent == node);
+        assert(node->child[RIGHT] == NULL || !LESS_THAN(node->child[RIGHT]->value, node->value));
     }
 }
 

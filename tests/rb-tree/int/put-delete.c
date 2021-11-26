@@ -12,9 +12,9 @@ int main() {
     initRBTreeTest(&map);
     for (int i = 0; i < 10000; i++) {
         if (rand() % 2 == 0) {
-            insertIntoRBTreeTest(&map, rand());
+            insertIntoRBTreeTest(&map, rand() % 100);
         } else {
-            deleteFromRBTreeTest(&map, rand());
+            deleteFromRBTreeTest(&map, rand() % 100);
         }
         if (i % 100 == 0) {
             isRBTree(&map);

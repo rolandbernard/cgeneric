@@ -117,12 +117,20 @@ static void TYPED(introSortWithDepth)(TYPE* array, size_t size, size_t depth) {
 }
 
 static size_t TYPED(floorLog2)(size_t size) {
+#if defined(__GCC__) || defined(__clang__)
+    if (size == 0) {
+        return 0;
+    } else {
+        return  63 - __builtin_clzl(size);
+    }
+#else
     size_t n = 0;
     while (size > 1) {
         n++;
         size /= 2;
     }
     return n;
+#endif
 }
 
 void TYPED(introSort)(TYPE* array, size_t size) {

@@ -50,7 +50,8 @@ void assertHeight(TYPED(BTreeNode)* node, size_t h) {
 }
 
 void isBTree(TYPED(BTree)* tree) {
-    assert(tree->root->child[0] == NULL || tree->root->count >= 1);
+    assert(tree->root == NULL || tree->root->child[0] == NULL || tree->root->count >= 1);
+    assert(tree->root == NULL || tree->root->parent == NULL);
     assertNodes(tree->root);
     assertHeight(tree->root, height(tree->root));
 }

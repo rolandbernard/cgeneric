@@ -48,10 +48,10 @@ TYPE TYPED(firstBTree)(TYPED(BTree)* tree) {
 
 TYPE TYPED(lastBTree)(TYPED(BTree)* tree) {
     TYPED(BTreeNode)* c = tree->root;
-    while (c->child[c->count - 1] != NULL) {
-        c = c->child[c->count - 1];
+    while (c->child[c->count] != NULL) {
+        c = c->child[c->count];
     }
-    return c->values[c->count];
+    return c->values[c->count - 1];
 }
 
 static size_t TYPED(lowerBound)(TYPE* array, size_t size, TYPE value) {
@@ -204,6 +204,7 @@ static void TYPED(deleteRebalanceBTreeNode)(TYPED(BTree)* tree, TYPED(BTreeNode)
     if (node->count == 0 && node->parent == NULL) {
         tree->root = node->child[0];
         FREE(node);
+        tree->root->parent = NULL;
     } else if (node->count < CAPACITY / 2 && node->parent != NULL) {
         size_t d = TYPED(positionOfChild)(node->parent, node);
         if (

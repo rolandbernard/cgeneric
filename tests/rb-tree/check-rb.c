@@ -40,6 +40,7 @@ void noRedRed(TYPED(RBTreeNode)* node) {
 }
 
 void isRBTree(TYPED(RBTree)* tree) {
+    assert(tree->root == NULL || tree->root->parent == NULL);
     noRedRed(tree->root);
     size_t d = 0;
     TYPED(RBTreeNode)* c = tree->root;

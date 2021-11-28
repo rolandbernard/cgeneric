@@ -329,6 +329,28 @@ TYPED(BTreeIterator) TYPED(getBTreeIterator)(TYPED(BTree)* tree) {
     return ret;
 }
 
+TYPED(BTreeIterator) TYPED(getBTreeIteratorAt)(TYPED(BTree)* tree, TYPE k) {
+    TYPED(BTreeNode)* p = NULL;
+    size_t n = 0;
+    TYPED(BTreeNode)* c = tree->root;
+    while (c != NULL) {
+        size_t d = TYPED(lowerBound)(c->values, c->count, k);
+        if (
+            d < c->count && !LESS_THAN(c->values[d], k)
+            && (p == NULL || !LESS_THAN(p->values[n], c->values[d]))
+        ) {
+            n = d;
+            p = c;
+        }
+        c = c->child[d];
+    }
+    TYPED(BTreeIterator) ret = {
+        .current = p,
+        .n = n,
+    };
+    return ret;
+}
+
 bool TYPED(hasNextBTree)(TYPED(BTreeIterator)* iter) {
     return iter->current != NULL;
 }

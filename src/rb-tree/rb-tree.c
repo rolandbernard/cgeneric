@@ -279,6 +279,25 @@ TYPED(RBTreeIterator) TYPED(getRBTreeIterator)(TYPED(RBTree)* tree) {
     return ret;
 }
 
+TYPED(RBTreeIterator) TYPED(getRBTreeIteratorAt)(TYPED(RBTree)* tree, TYPE k) {
+    TYPED(RBTreeNode)* p = NULL;
+    TYPED(RBTreeNode)* c = tree->root;
+    while (c != NULL) {
+        if (!LESS_THAN(c->value, k) && (p == NULL || !LESS_THAN(p->value, c->value))) {
+            p = c;
+        }
+        if (LESS_THAN(k, c->value)) {
+            c = c->child[LEFT];
+        } else {
+            c = c->child[RIGHT];
+        }
+    }
+    TYPED(RBTreeIterator) ret = {
+        .current = p,
+    };
+    return ret;
+}
+
 bool TYPED(hasNextRBTree)(TYPED(RBTreeIterator)* iter) {
     return iter->current != NULL;
 }

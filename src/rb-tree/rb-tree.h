@@ -43,6 +43,8 @@ struct TYPED(RBTreeIterator) {
 
 TYPED(RBTreeIterator) TYPED(getRBTreeIterator)(TYPED(RBTree)* tree);
 
+TYPED(RBTreeIterator) TYPED(getRBTreeIteratorAt)(TYPED(RBTree)* tree, TYPE k);
+
 bool TYPED(hasNextRBTree)(TYPED(RBTreeIterator)* iter);
 
 TYPE TYPED(getNextRBTree)(TYPED(RBTreeIterator)* iter);

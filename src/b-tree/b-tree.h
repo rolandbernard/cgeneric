@@ -44,6 +44,8 @@ struct TYPED(BTreeIterator) {
 
 TYPED(BTreeIterator) TYPED(getBTreeIterator)(TYPED(BTree)* tree);
 
+TYPED(BTreeIterator) TYPED(getBTreeIteratorAt)(TYPED(BTree)* tree, TYPE k);
+
 bool TYPED(hasNextBTree)(TYPED(BTreeIterator)* iter);
 
 TYPE TYPED(getNextBTree)(TYPED(BTreeIterator)* iter);

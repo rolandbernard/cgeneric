@@ -189,7 +189,8 @@ static void TYPED(removeRebalanceAvlTree)(TYPED(AvlTree)* tree, TYPED(AvlTreeNod
         int bal = dir == RIGHT ? -1 : 1;
         if (p->balance == bal) {
             TYPED(AvlTreeNode)* s = p->child[1 - dir];
-            if (s->balance == -bal) {
+            int b = s->balance;
+            if (b == -bal) {
                 TYPED(rotateAvlTree)(tree, s, 1 - dir);
                 TYPED(AvlTreeNode)* n = TYPED(rotateAvlTree)(tree, p, dir);
                 if (n->balance == 0) {
@@ -203,6 +204,7 @@ static void TYPED(removeRebalanceAvlTree)(TYPED(AvlTree)* tree, TYPED(AvlTreeNod
                     s->balance = bal;
                 }
                 n->balance = 0;
+                p = n;
             } else {
                 TYPED(AvlTreeNode)* n = TYPED(rotateAvlTree)(tree, p, dir);
                 if (n->balance == 0) {
@@ -212,6 +214,10 @@ static void TYPED(removeRebalanceAvlTree)(TYPED(AvlTree)* tree, TYPED(AvlTreeNod
                     n->balance = 0;
                     p->balance = 0;
                 }
+                p = n;
+            }
+            if (b == 0) {
+                return;
             }
         } else if (p->balance == -bal) {
             p->balance = 0;

@@ -1,0 +1,33 @@
+// test:
+
+#include <assert.h>
+
+#define TYPED(NAME) NAME ## Test
+#define IS_SET
+
+#include "trie/trie.c"
+
+int main() {
+    TrieTest map;
+    initTrieTest(&map);
+    for (int i = 0; i < 1000; i++) {
+        insertIntoTrieTest(&map, i);
+        if (i % 100 == 0) {
+            assert(sizeOfTrieTest(&map) == 1 + (size_t)i);
+        }
+    }
+    for (int i = 0; i < 500; i++) {
+        deleteFromTrieTest(&map, i);
+        if (i % 100 == 0) {
+            assert(sizeOfTrieTest(&map) == 999 - (size_t)i);
+        }
+    }
+    for (int i = 0; i < 500; i++) {
+        assert(!hasInTrieTest(&map, i));
+    }
+    for (int i = 500; i < 1000; i++) {
+        assert(hasInTrieTest(&map, i));
+    }
+    deinitTrieTest(&map);
+    return 0;
+}

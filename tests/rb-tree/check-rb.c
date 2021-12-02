@@ -1,6 +1,8 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #ifndef TYPE
 #include "rb-tree/rb-tree.h"
@@ -11,6 +13,39 @@
 
 #define BLACK false
 #define RED   true
+
+void blanks(int depth, int pos, bool left) {
+    for (int i = 0; i < depth; i++) {
+        if ((pos & (1 << (depth - 1 - i))) != 0) {
+            if (i == depth - 1) {
+                if (left) {
+                    fprintf(stdout, "  ┌");
+                } else {
+                    fprintf(stdout, "  └");
+                }
+            } else {
+                fprintf(stdout, "  │");
+            }
+        } else {
+            fprintf(stdout, "   ");
+        }
+    }
+}
+
+void print(TYPED(RBTreeNode)* n, int depth, int pos, bool left) {
+    if (n != NULL) {
+        int keep = 2 * pos + 1;
+        int leave = keep & ~0b10;
+        print(n->child[RIGHT], depth + 1, left ? leave : keep, true);
+        blanks(depth, pos, left);
+        fprintf(stdout, "─%2d(%s)\n", n->value, n->color == RED ? "R" : "B");
+        print(n->child[LEFT], depth + 1, left ? keep : leave, false);
+    }
+}
+
+void printTree(TYPED(RBTreeNode)* n) {
+    print(n, 0, 0, false);
+}
 
 void assertBlackNodes(TYPED(RBTreeNode)* node, size_t c) {
     if (node == NULL) {

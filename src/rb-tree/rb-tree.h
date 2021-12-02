@@ -12,6 +12,9 @@ struct TYPED(RBTreeNode) {
     TYPED(RBTreeNode)* parent;
     TYPED(RBTreeNode)* child[2];
     TYPE value;
+#ifdef IS_MAP
+    VALUE val;
+#endif
     bool color;
 };
 
@@ -29,11 +32,17 @@ TYPE TYPED(firstRBTree)(TYPED(RBTree)* tree);
 
 TYPE TYPED(lastRBTree)(TYPED(RBTree)* tree);
 
-void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element);
-
 bool TYPED(hasInRBTree)(TYPED(RBTree)* tree, TYPE element);
 
 void TYPED(deleteFromRBTree)(TYPED(RBTree)* tree, TYPE element);
+
+#ifdef IS_MAP
+void TYPED(putInRBTree)(TYPED(RBTree)* tree, TYPE key, VALUE value);
+
+VALUE TYPED(getFromRBTree)(TYPED(RBTree)* tree, TYPE key);
+#else
+void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element);
+#endif
 
 typedef struct TYPED(RBTreeIterator) TYPED(RBTreeIterator);
 

@@ -120,6 +120,53 @@ static void TYPED(insertRebalanceRBTree)(TYPED(RBTree)* tree, TYPED(RBTreeNode)*
     }
 }
 
+#ifdef IS_MAP
+void TYPED(putInRBTree)(TYPED(RBTree)* tree, TYPE key, VALUE value) {
+    if (tree->root == NULL) {
+        tree->root = ZALLOC(TYPED(RBTreeNode), 1);
+        tree->root->color = RED;
+        tree->root->value = key;
+        tree->root->val = value;
+    } else {
+        TYPED(RBTreeNode)* p = NULL;
+        TYPED(RBTreeNode)* c = tree->root;
+        int dir = 0;
+        while (c != NULL) {
+            p = c;
+            if (LESS_THAN(key, c->value)) {
+                c = c->child[LEFT];
+                dir = LEFT;
+            } else if (LESS_THAN(c->value, key)) {
+                c = c->child[RIGHT];
+                dir = RIGHT;
+            } else {
+                c->val = value;
+                return;
+            }
+        }
+        p->child[dir] = ZALLOC(TYPED(RBTreeNode), 1);
+        p->child[dir]->color = RED;
+        p->child[dir]->parent = p;
+        p->child[dir]->value = key;
+        p->child[dir]->val = value;
+        TYPED(insertRebalanceRBTree)(tree, p->child[dir]);
+    }
+}
+
+VALUE TYPED(getFromRBTree)(TYPED(RBTree)* tree, TYPE key) {
+    TYPED(RBTreeNode)* c = tree->root;
+    while (c != NULL) {
+        if (LESS_THAN(key, c->value)) {
+            c = c->child[LEFT];
+        } else if (LESS_THAN(c->value, key)) {
+            c = c->child[RIGHT];
+        } else {
+            return c->val;
+        }
+    }
+    return DEFAULT;
+}
+#else
 void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element) {
     if (tree->root == NULL) {
         tree->root = ZALLOC(TYPED(RBTreeNode), 1);
@@ -155,6 +202,7 @@ void TYPED(insertIntoRBTree)(TYPED(RBTree)* tree, TYPE element) {
         TYPED(insertRebalanceRBTree)(tree, p->child[dir]);
     }
 }
+#endif
 
 static TYPED(RBTreeNode)* TYPED(replacementForRBTreeNode)(TYPED(RBTreeNode)* node) {
     if (node->child[LEFT] != NULL && node->child[RIGHT] != NULL) {
@@ -228,6 +276,9 @@ static void TYPED(removeRBTreeNode)(TYPED(RBTree)* tree, TYPED(RBTreeNode)* node
     } else if (node->child[LEFT] == NULL || node->child[RIGHT] == NULL) {
         if (node == tree->root) {
             node->value = rep->value;
+#ifdef IS_MAP
+            node->val = rep->val;
+#endif
             node->child[LEFT] = NULL;
             node->child[RIGHT] = NULL;
             FREE(rep);
@@ -243,9 +294,10 @@ static void TYPED(removeRBTreeNode)(TYPED(RBTree)* tree, TYPED(RBTreeNode)* node
             }
         }
     } else {
-        TYPE tmp = rep->value;
-        rep->value = node->value;
-        node->value = tmp;
+        node->value = rep->value;
+#ifdef IS_MAP
+        node->val = rep->val;
+#endif
         TYPED(removeRBTreeNode)(tree, rep);
     }
 }

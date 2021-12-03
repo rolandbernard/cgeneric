@@ -2,6 +2,8 @@
 #include "default.h"
 #include <stddef.h>
 
+size_t TYPED(floorLog2)(size_t size);
+
 void TYPED(swap)(TYPE* array, size_t i, size_t j);
 
 void TYPED(insertionSort)(TYPE* array, size_t size);

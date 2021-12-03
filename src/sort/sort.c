@@ -116,7 +116,7 @@ static void TYPED(introSortWithDepth)(TYPE* array, size_t size, size_t depth) {
     }
 }
 
-static size_t TYPED(floorLog2)(size_t size) {
+size_t TYPED(floorLog2)(size_t size) {
 #if defined(__GCC__) || defined(__clang__)
     if (size == 0) {
         return 0;

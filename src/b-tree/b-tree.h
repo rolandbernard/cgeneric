@@ -8,11 +8,25 @@ typedef struct TYPED(BTree) TYPED(BTree);
 
 typedef struct TYPED(BTreeNode) TYPED(BTreeNode);
 
+#ifdef IS_MAP
+typedef struct TYPED(BTreeEntry) TYPED(BTreeEntry);
+
+struct TYPED(BTreeEntry) {
+    TYPE key;
+    VALUE value;
+};
+#endif
+
+
 struct TYPED(BTreeNode) {
     TYPED(BTreeNode)* parent;
     size_t count;
     TYPED(BTreeNode)* child[CAPACITY + 1];
+#ifndef IS_MAP
     TYPE values[CAPACITY];
+#else
+    TYPED(BTreeEntry) values[CAPACITY];
+#endif
 };
 
 struct TYPED(BTree) {
@@ -31,7 +45,13 @@ TYPE TYPED(lastBTree)(TYPED(BTree)* tree);
 
 bool TYPED(hasInBTree)(TYPED(BTree)* tree, TYPE element);
 
+#ifdef IS_MAP
+void TYPED(putInBTree)(TYPED(BTree)* tree, TYPE key, VALUE value);
+
+VALUE TYPED(getFromBTree)(TYPED(BTree)* tree, TYPE key);
+#else
 void TYPED(insertIntoBTree)(TYPED(BTree)* tree, TYPE element);
+#endif
 
 void TYPED(deleteFromBTree)(TYPED(BTree)* tree, TYPE element);
 

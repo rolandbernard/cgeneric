@@ -4,6 +4,12 @@
 
 #include "b-tree.h"
 
+#ifdef IS_MAP
+#define ENTRY TYPED(BTreeEntry)
+#else
+#define ENTRY TYPE
+#endif
+
 void TYPED(initBTree)(TYPED(BTree)* tree) {
     tree->root = NULL;
 }
@@ -43,7 +49,11 @@ TYPE TYPED(firstBTree)(TYPED(BTree)* tree) {
     while (c->child[0] != NULL) {
         c = c->child[0];
     }
+#ifndef IS_MAP
     return c->values[0];
+#else
+    return c->values[0].key;
+#endif
 }
 
 TYPE TYPED(lastBTree)(TYPED(BTree)* tree) {
@@ -51,16 +61,24 @@ TYPE TYPED(lastBTree)(TYPED(BTree)* tree) {
     while (c->child[c->count] != NULL) {
         c = c->child[c->count];
     }
+#ifndef IS_MAP
     return c->values[c->count - 1];
+#else
+    return c->values[c->count - 1].key;
+#endif
 }
 
-static size_t TYPED(lowerBound)(TYPE* array, size_t size, TYPE value) {
+static size_t TYPED(lowerBound)(ENTRY* array, size_t size, TYPE value) {
 #ifdef BINARY_SEARCH
     size_t i = 0;
     size_t j = size;
     while (i != j) {
         size_t h = (i + j) / 2;
+#ifndef IS_MAP
         if (!LESS_THAN(array[h], value)) {
+#else
+        if (!LESS_THAN(array[h].key, value)) {
+#endif
             j = h;
         } else {
             i = h + 1;
@@ -69,7 +87,11 @@ static size_t TYPED(lowerBound)(TYPE* array, size_t size, TYPE value) {
     return i;
 #else
     size_t i = 0;
+#ifndef IS_MAP
     while (i < size && LESS_THAN(array[i], value)) {
+#else
+    while (i < size && LESS_THAN(array[i].key, value)) {
+#endif
         i++;
     }
     return i;
@@ -81,7 +103,11 @@ bool TYPED(hasInBTree)(TYPED(BTree)* tree, TYPE element) {
     while (c != NULL) {
         size_t d = TYPED(lowerBound)(c->values, c->count, element);
         if (
+#ifndef IS_MAP
             d < c->count && !LESS_THAN(c->values[d], element) && !LESS_THAN(element, c->values[d])
+#else
+            d < c->count && !LESS_THAN(c->values[d].key, element) && !LESS_THAN(element, c->values[d].key)
+#endif
         ) {
             return true;
         }
@@ -103,7 +129,7 @@ static size_t TYPED(positionOfChild)(TYPED(BTreeNode)* parent, TYPED(BTreeNode)*
 }
 
 static void TYPED(insertIntoBTreeNode)(
-    TYPED(BTree)* tree, TYPED(BTreeNode)* node, TYPE value, TYPED(BTreeNode)* child, size_t at
+    TYPED(BTree)* tree, TYPED(BTreeNode)* node, ENTRY value, TYPED(BTreeNode)* child, size_t at
 ) {
     if (node->count == CAPACITY) {
         TYPED(BTreeNode)* right = ZALLOC(TYPED(BTreeNode), 1);
@@ -114,7 +140,7 @@ static void TYPED(insertIntoBTreeNode)(
             right->child[j] = node->child[node->count / 2 + j];
         }
         right->child[right->count] = node->child[node->count];
-        TYPE median;
+        ENTRY median;
         if (at == node->count / 2) {
             median = value;
             right->child[0] = child;
@@ -173,7 +199,7 @@ static void TYPED(insertIntoBTreeNode)(
     }
 }
 
-void TYPED(insertIntoBTree)(TYPED(BTree)* tree, TYPE element) {
+static void TYPED(insertEntryIntoBTree)(TYPED(BTree)* tree, ENTRY element) {
     if (tree->root == NULL) {
         tree->root = ZALLOC(TYPED(BTreeNode), 1);
         tree->root->count = 1;
@@ -183,11 +209,20 @@ void TYPED(insertIntoBTree)(TYPED(BTree)* tree, TYPE element) {
         TYPED(BTreeNode)* c = tree->root;
         size_t n = 0;
         while (c != NULL) {
+#ifndef IS_MAP
             size_t d = TYPED(lowerBound)(c->values, c->count, element);
+#else
+            size_t d = TYPED(lowerBound)(c->values, c->count, element.key);
+#endif
 #ifdef IS_SET
             if (
+#ifndef IS_MAP
                 d < c->count && !LESS_THAN(c->values[d], element)
                 && !LESS_THAN(element, c->values[d])
+#else
+                d < c->count && !LESS_THAN(c->values[d].key, element.key)
+                && !LESS_THAN(element.key, c->values[d].key)
+#endif
             ) {
                 return;
             }
@@ -199,6 +234,34 @@ void TYPED(insertIntoBTree)(TYPED(BTree)* tree, TYPE element) {
         TYPED(insertIntoBTreeNode)(tree, p, element, NULL, n);
     }
 }
+
+#ifdef IS_MAP
+void TYPED(putInBTree)(TYPED(BTree)* tree, TYPE key, VALUE value) {
+    ENTRY entry = {
+        .key = key,
+        .value = value,
+    };
+    TYPED(insertEntryIntoBTree)(tree, entry);
+}
+
+VALUE TYPED(getFromBTree)(TYPED(BTree)* tree, TYPE key) {
+    TYPED(BTreeNode)* c = tree->root;
+    while (c != NULL) {
+        size_t d = TYPED(lowerBound)(c->values, c->count, key);
+        if (
+            d < c->count && !LESS_THAN(c->values[d].key, key) && !LESS_THAN(key, c->values[d].key)
+        ) {
+            return c->values[d].value;
+        }
+        c = c->child[d];
+    }
+    return false;
+}
+#else
+void TYPED(insertIntoBTree)(TYPED(BTree)* tree, TYPE element) {
+    TYPED(insertEntryIntoBTree)(tree, element);
+}
+#endif
 
 static void TYPED(deleteRebalanceBTreeNode)(TYPED(BTree)* tree, TYPED(BTreeNode)* node) {
     if (node->count == 0 && node->parent == NULL) {
@@ -306,8 +369,13 @@ void TYPED(deleteFromBTree)(TYPED(BTree)* tree, TYPE element) {
         while (c != NULL) {
             size_t d = TYPED(lowerBound)(c->values, c->count, element);
             if (
+#ifndef IS_MAP
                 d < c->count && !LESS_THAN(c->values[d], element)
                 && !LESS_THAN(element, c->values[d])
+#else
+                d < c->count && !LESS_THAN(c->values[d].key, element)
+                && !LESS_THAN(element, c->values[d].key)
+#endif
             ) {
                 TYPED(deleteFromBTreeNode)(tree, c, d);
                 return;
@@ -336,8 +404,13 @@ TYPED(BTreeIterator) TYPED(getBTreeIteratorAt)(TYPED(BTree)* tree, TYPE k) {
     while (c != NULL) {
         size_t d = TYPED(lowerBound)(c->values, c->count, k);
         if (
+#ifndef IS_MAP
             d < c->count && !LESS_THAN(c->values[d], k)
             && (p == NULL || !LESS_THAN(p->values[n], c->values[d]))
+#else
+            d < c->count && !LESS_THAN(c->values[d].key, k)
+            && (p == NULL || !LESS_THAN(p->values[n].key, c->values[d].key))
+#endif
         ) {
             n = d;
             p = c;
@@ -356,7 +429,7 @@ bool TYPED(hasNextBTree)(TYPED(BTreeIterator)* iter) {
 }
 
 TYPE TYPED(getNextBTree)(TYPED(BTreeIterator)* iter) {
-    TYPE ret = iter->current->values[iter->n];
+    ENTRY ret = iter->current->values[iter->n];
     iter->n++;
     if (iter->current->child[iter->n] != NULL) {
         TYPED(BTreeNode)* c = iter->current->child[iter->n];
@@ -375,6 +448,12 @@ TYPE TYPED(getNextBTree)(TYPED(BTreeIterator)* iter) {
         }
         iter->current = parent;
     }
+#ifndef IS_MAP
     return ret;
+#else
+    return ret.key;
+#endif
 }
+
+#undef ENTRY
 

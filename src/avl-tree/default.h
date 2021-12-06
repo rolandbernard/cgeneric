@@ -15,4 +15,15 @@
 #endif
 
 // #define IS_SET
+// #define IS_MAP
+
+#ifdef IS_MAP
+#define IS_SET
+#ifndef VALUE
+#define VALUE int
+#endif
+#ifndef DEFAULT
+#define DEFAULT (VALUE)0
+#endif
+#endif
 

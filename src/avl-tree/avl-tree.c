@@ -129,6 +129,52 @@ static void TYPED(insertRebalanceAvlTree)(TYPED(AvlTree)* tree, TYPED(AvlTreeNod
     }
 }
 
+#ifdef IS_MAP
+void TYPED(putInAvlTree)(TYPED(AvlTree)* tree, TYPE key, VALUE value) {
+    if (tree->root == NULL) {
+        tree->root = ZALLOC(TYPED(AvlTreeNode), 1);
+        tree->root->balance = 0;
+        tree->root->value = key;
+        tree->root->val = value;
+    } else {
+        TYPED(AvlTreeNode)* p = NULL;
+        TYPED(AvlTreeNode)* c = tree->root;
+        int dir = 0;
+        while (c != NULL) {
+            p = c;
+            if (LESS_THAN(key, c->value)) {
+                c = c->child[LEFT];
+                dir = LEFT;
+            } else if (LESS_THAN(c->value, key)) {
+                c = c->child[RIGHT];
+                dir = RIGHT;
+            } else {
+                return;
+            }
+        }
+        p->child[dir] = ZALLOC(TYPED(AvlTreeNode), 1);
+        p->child[dir]->balance = 0;
+        p->child[dir]->parent = p;
+        p->child[dir]->value = key;
+        p->child[dir]->val = value;
+        TYPED(insertRebalanceAvlTree)(tree, p->child[dir]);
+    }
+}
+
+VALUE TYPED(getFromAvlTree)(TYPED(AvlTree)* tree, TYPE key) {
+    TYPED(AvlTreeNode)* c = tree->root;
+    while (c != NULL) {
+        if (LESS_THAN(key, c->value)) {
+            c = c->child[LEFT];
+        } else if (LESS_THAN(c->value, key)) {
+            c = c->child[RIGHT];
+        } else {
+            return c->val;
+        }
+    }
+    return DEFAULT;
+}
+#else
 void TYPED(insertIntoAvlTree)(TYPED(AvlTree)* tree, TYPE element) {
     if (tree->root == NULL) {
         tree->root = ZALLOC(TYPED(AvlTreeNode), 1);
@@ -164,6 +210,7 @@ void TYPED(insertIntoAvlTree)(TYPED(AvlTree)* tree, TYPE element) {
         TYPED(insertRebalanceAvlTree)(tree, p->child[dir]);
     }
 }
+#endif
 
 static TYPED(AvlTreeNode)* TYPED(replacementForAvlTreeNode)(TYPED(AvlTreeNode)* node) {
     if (node->child[LEFT] != NULL && node->child[RIGHT] != NULL) {
@@ -244,6 +291,9 @@ static void TYPED(removeAvlTreeNode)(TYPED(AvlTree)* tree, TYPED(AvlTreeNode)* n
     } else if (node->child[LEFT] == NULL || node->child[RIGHT] == NULL) {
         if (node == tree->root) {
             node->value = rep->value;
+#ifdef IS_MAP
+            node->val = rep->val;
+#endif
             node->child[LEFT] = NULL;
             node->child[RIGHT] = NULL;
             FREE(rep);
@@ -255,9 +305,10 @@ static void TYPED(removeAvlTreeNode)(TYPED(AvlTree)* tree, TYPED(AvlTreeNode)* n
             FREE(node);
         }
     } else {
-        TYPE tmp = rep->value;
-        rep->value = node->value;
-        node->value = tmp;
+        node->value = rep->value;
+#ifdef IS_MAP
+        node->val = rep->val;
+#endif
         TYPED(removeAvlTreeNode)(tree, rep);
     }
 }

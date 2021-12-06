@@ -18,6 +18,7 @@
 // #define IS_MAP
 
 #ifdef IS_MAP
+#define IS_SET
 #ifndef VALUE
 #define VALUE int
 #endif

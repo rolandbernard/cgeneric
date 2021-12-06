@@ -13,6 +13,9 @@ struct TYPED(AvlTreeNode) {
     TYPED(AvlTreeNode)* parent;
     TYPED(AvlTreeNode)* child[2];
     TYPE value;
+#ifdef IS_MAP
+    VALUE val;
+#endif
     int8_t balance;
 };
 
@@ -30,7 +33,13 @@ TYPE TYPED(firstAvlTree)(TYPED(AvlTree)* tree);
 
 TYPE TYPED(lastAvlTree)(TYPED(AvlTree)* tree);
 
+#ifdef IS_MAP
+void TYPED(putInAvlTree)(TYPED(AvlTree)* tree, TYPE key, VALUE value);
+
+VALUE TYPED(getFromAvlTree)(TYPED(AvlTree)* tree, TYPE key);
+#else
 void TYPED(insertIntoAvlTree)(TYPED(AvlTree)* tree, TYPE element);
+#endif
 
 bool TYPED(hasInAvlTree)(TYPED(AvlTree)* tree, TYPE element);
 

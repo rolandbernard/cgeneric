@@ -22,7 +22,3 @@
 #include <string.h>
 #define EQUALS(FIRST, SECOND) (memcmp(&FIRST, &SECOND, sizeof(FIRST)) == 0)
 #endif
-
-#ifndef DEFAULT
-#define DEFAULT (VALUE)0
-#endif

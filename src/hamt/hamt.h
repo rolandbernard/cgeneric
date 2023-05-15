@@ -32,6 +32,10 @@ bool TYPED(putInHamt)(TYPED(Hamt)* table, KEY key, VALUE value);
 
 bool TYPED(getFromHamt)(TYPED(Hamt)* table, KEY key, VALUE* value);
 
+VALUE TYPED(getOrDefaultFromHamt)(TYPED(Hamt)* table, KEY key, VALUE def);
+
+bool TYPED(hasInHamt)(TYPED(Hamt)* table, KEY key);
+
 bool TYPED(deleteFromHamt)(TYPED(Hamt)* table, KEY key);
 
 typedef struct TYPED(HamtIterator) TYPED(HamtIterator);

@@ -91,7 +91,6 @@ void TYPED(deinitHamt)(TYPED(Hamt)* table) {
 }
 
 void TYPED(copyHamt)(TYPED(Hamt)* destination, TYPED(Hamt)* source) {
-    TYPED(deinitHamt)(destination);
     TYPED(copyHamtNode)(source->root);
     destination->root = source->root;
 }
@@ -132,13 +131,13 @@ static TYPED(HamtNode)* TYPED(mergeHamtNode)(KEY key1, VALUE value1, uint64_t ha
         values[1] = value2;
         return node;
     } else {
-        uint32_t idx_mask1 = 1 << TYPED(hamtLevelIndex)(hash1, depth);
-        uint32_t idx_mask2 = 1 << TYPED(hamtLevelIndex)(hash2, depth);
+        uint32_t idx_mask1 = UINT32_C(1) << TYPED(hamtLevelIndex)(hash1, depth);
+        uint32_t idx_mask2 = UINT32_C(1) << TYPED(hamtLevelIndex)(hash2, depth);
         if (idx_mask1 == idx_mask2) {
             TYPED(HamtNode)* node = TYPED(createHamtNode)(0, 1);
             node->keymap = 0;
             node->treemap = idx_mask1;
-            TYPED(HamtNode)** trees = TYPED(hamtNodeTrees)(node, 2);
+            TYPED(HamtNode)** trees = TYPED(hamtNodeTrees)(node, 0);
             trees[0] = TYPED(mergeHamtNode)(key1, value1, hash1, key2, value2, hash2, depth + 1);
             return node;
         } else {
@@ -170,6 +169,7 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
             if (EQUALS(key, keys[i])) {
                 if (allow_reuse) {
                     values[i] = value;
+                    TYPED(copyHamtNode)(node);
                 } else {
                     TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size, 0);
                     new_node->keymap = node->keymap;
@@ -178,8 +178,7 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
                     VALUE* new_values = TYPED(hamtNodeValues)(new_node, key_size);
                     memcpy(new_keys, keys, key_size * sizeof(KEY));
                     memcpy(new_values, values, key_size * sizeof(VALUE));
-                    values[i] = value;
-                    TYPED(freeHamtNode)(node);
+                    new_values[i] = value;
                     *node_ref = new_node;
                 }
                 return false;
@@ -192,18 +191,18 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
         VALUE* new_values = TYPED(hamtNodeValues)(new_node, key_size + 1);
         memcpy(new_keys, keys, key_size * sizeof(KEY));
         memcpy(new_values, values, key_size * sizeof(VALUE));
-        keys[key_size] = key;
-        values[key_size] = value;
-        TYPED(freeHamtNode)(node);
+        new_keys[key_size] = key;
+        new_values[key_size] = value;
         *node_ref = new_node;
         return true;
     } else {
-        uint32_t idx_mask = 1 << TYPED(hamtLevelIndex)(hash, depth);
+        uint32_t idx_mask = UINT32_C(1) << TYPED(hamtLevelIndex)(hash, depth);
         if ((node->keymap & idx_mask) != 0) {
             uint32_t idx = TYPED(countBits)(node->keymap & (idx_mask - 1));
             if (EQUALS(key, keys[idx])) {
                 if (allow_reuse) {
                     values[idx] = value;
+                    TYPED(copyHamtNode)(node);
                 } else {
                     TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size, tree_size);
                     new_node->keymap = node->keymap;
@@ -214,11 +213,10 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
                     memcpy(new_keys, keys, key_size * sizeof(KEY));
                     memcpy(new_values, values, key_size * sizeof(VALUE));
                     memcpy(new_trees, trees, tree_size * sizeof(TYPED(HamtNode)*));
-                    values[idx] = value;
+                    new_values[idx] = value;
                     for (size_t i = 0; i < tree_size; i++) {
                         TYPED(copyHamtNode)(new_trees[i]);
                     }
-                    TYPED(freeHamtNode)(node);
                     *node_ref = new_node;
                 }
                 return false;
@@ -243,6 +241,7 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
                         (tree_size - new_idx) * sizeof(TYPED(HamtNode)*)
                     );
                     new_trees[new_idx] = new_tree;
+                    TYPED(copyHamtNode)(node);
                 } else {
                     TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size - 1, tree_size + 1);
                     new_node->keymap = node->keymap & ~idx_mask;
@@ -262,12 +261,11 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
                         (tree_size - new_idx) * sizeof(TYPED(HamtNode)*)
                     );
                     new_trees[new_idx] = new_tree;
-                    for (size_t i = 0; i < tree_size; i++) {
+                    for (size_t i = 0; i < tree_size + 1; i++) {
                         if (i != new_idx) {
                             TYPED(copyHamtNode)(new_trees[i]);
                         }
                     }
-                    TYPED(freeHamtNode)(node);
                     *node_ref = new_node;
                 }
                 return true;
@@ -279,6 +277,7 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
             if (allow_reuse) {
                 TYPED(freeHamtNode)(trees[idx]);
                 trees[idx] = new_tree;
+                TYPED(copyHamtNode)(node);
             } else {
                 TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size, tree_size);
                 new_node->keymap = node->keymap;
@@ -295,7 +294,6 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
                         TYPED(copyHamtNode)(new_trees[i]);
                     }
                 }
-                TYPED(freeHamtNode)(node);
                 *node_ref = new_node;
             }
             return result;
@@ -317,7 +315,6 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
             for (size_t i = 0; i < tree_size; i++) {
                 TYPED(copyHamtNode)(new_trees[i]);
             }
-            TYPED(freeHamtNode)(node);
             *node_ref = new_node;
             return true;
         }
@@ -325,7 +322,24 @@ static bool TYPED(putInHamtNode)(TYPED(HamtNode)** node_ref, KEY key, VALUE valu
 }
 
 bool TYPED(putInHamt)(TYPED(Hamt)* table, KEY key, VALUE value) {
-    return TYPED(putInHamtNode)(&table->root, key, value, HASH(key), 0, true);
+    if (table->root == NULL) {
+        uint32_t idx_mask = UINT32_C(1) << TYPED(hamtLevelIndex)(HASH(key), 0);
+        TYPED(HamtNode)* node = TYPED(createHamtNode)(1, 0);
+        node->keymap = idx_mask;
+        node->treemap = 0;
+        KEY* keys = TYPED(hamtNodeKeys)(node);
+        VALUE* values = TYPED(hamtNodeValues)(node, 1);
+        keys[0] = key;
+        values[0] = value;
+        table->root = node;
+        return true;
+    } else {
+        TYPED(HamtNode)* new_root = table->root;
+        bool result = TYPED(putInHamtNode)(&new_root, key, value, HASH(key), 0, true);
+        TYPED(freeHamtNode)(table->root);
+        table->root = new_root;
+        return result;
+    }
 }
 
 static bool TYPED(getFromHamtNode)(TYPED(HamtNode)* node, KEY key, VALUE* value, uint64_t hash, size_t depth) {
@@ -344,7 +358,7 @@ static bool TYPED(getFromHamtNode)(TYPED(HamtNode)* node, KEY key, VALUE* value,
         }
         return false;
     } else {
-        uint32_t idx_mask = 1 << TYPED(hamtLevelIndex)(hash, depth);
+        uint32_t idx_mask = UINT32_C(1) << TYPED(hamtLevelIndex)(hash, depth);
         if ((node->keymap & idx_mask) != 0) {
             uint32_t idx = TYPED(countBits)(node->keymap & (idx_mask - 1));
             if (EQUALS(key, keys[idx])) {
@@ -365,7 +379,20 @@ static bool TYPED(getFromHamtNode)(TYPED(HamtNode)* node, KEY key, VALUE* value,
 }
 
 bool TYPED(getFromHamt)(TYPED(Hamt)* table, KEY key, VALUE* value) {
-    return TYPED(getFromHamtNode)(table->root, key, value, HASH(key), 0);
+    if (table->root == NULL) {
+        return false;
+    } else {
+        return TYPED(getFromHamtNode)(table->root, key, value, HASH(key), 0);
+    }
+}
+
+VALUE TYPED(getOrDefaultFromHamt)(TYPED(Hamt)* table, KEY key, VALUE def) {
+    TYPED(getFromHamt)(table, key, &def);
+    return def;
+}
+
+bool TYPED(hasInHamt)(TYPED(Hamt)* table, KEY key) {
+    return TYPED(getFromHamt)(table, key, NULL);
 }
 
 static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint64_t hash, size_t depth, bool allow_reuse) {
@@ -380,7 +407,6 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
         for (size_t i = 0; i < key_size; i++) {
             if (EQUALS(key, keys[i])) {
                 if (key_size == 1) {
-                    TYPED(freeHamtNode)(node);
                     *node_ref = NULL;
                 } else if (allow_reuse) {
                     node->keymap = node->keymap;
@@ -393,6 +419,7 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
                     memmove(new_values, values, i * sizeof(KEY));
                     memmove(new_values + i, values + i + 1, (key_size - 1 - i) * sizeof(VALUE));
                     memmove(new_trees, trees, tree_size * sizeof(TYPED(HamtNode)*));
+                    TYPED(copyHamtNode)(node);
                 } else {
                     TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size - 1, 0);
                     new_node->keymap = node->keymap;
@@ -403,7 +430,6 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
                     memcpy(new_values, values, i * sizeof(VALUE));
                     memcpy(new_keys + i, keys + i + 1, (key_size - 1 - i) * sizeof(KEY));
                     memcpy(new_values + i, values + i + 1, (key_size - 1 - i) * sizeof(VALUE));
-                    TYPED(freeHamtNode)(node);
                     *node_ref = new_node;
                 }
                 return true;
@@ -411,12 +437,11 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
         }
         return false;
     } else {
-        uint32_t idx_mask = 1 << TYPED(hamtLevelIndex)(hash, depth);
+        uint32_t idx_mask = UINT32_C(1) << TYPED(hamtLevelIndex)(hash, depth);
         if ((node->keymap & idx_mask) != 0) {
             uint32_t idx = TYPED(countBits)(node->keymap & (idx_mask - 1));
             if (EQUALS(key, keys[idx])) {
                 if (key_size == 1 && tree_size == 0) {
-                    TYPED(freeHamtNode)(node);
                     *node_ref = NULL;
                 } else if (allow_reuse) {
                     node->keymap = node->keymap & ~idx_mask;
@@ -431,6 +456,7 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
                         new_values + idx, values + idx + 1, (key_size - 1 - idx) * sizeof(VALUE)
                     );
                     memmove(new_trees, trees, tree_size * sizeof(TYPED(HamtNode)*));
+                    TYPED(copyHamtNode)(node);
                 } else {
                     TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size - 1, tree_size);
                     new_node->keymap = node->keymap & ~idx_mask;
@@ -448,7 +474,6 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
                     for (size_t i = 0; i < tree_size; i++) {
                         TYPED(copyHamtNode)(new_trees[i]);
                     }
-                    TYPED(freeHamtNode)(node);
                     *node_ref = new_node;
                 }
                 return true;
@@ -461,15 +486,16 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
             if (TYPED(deleteFromHamtNode)(&new_tree, key, hash, depth + 1, allow_reuse)) {
                 if (new_tree == NULL) {
                     if (key_size == 0 && tree_size == 1) {
-                        TYPED(freeHamtNode)(node);
                         *node_ref = NULL;
                     } else if (allow_reuse) {
+                        TYPED(freeHamtNode)(trees[idx]);
                         node->keymap = node->keymap;
                         node->treemap = node->treemap & ~idx_mask;
                         memmove(
                             trees + idx, trees + idx + 1,
                             (tree_size - 1 - idx) * sizeof(TYPED(HamtNode)*)
                         );
+                        TYPED(copyHamtNode)(node);
                     } else {
                         TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size, tree_size - 1);
                         new_node->keymap = node->keymap;
@@ -487,12 +513,12 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
                         for (size_t i = 0; i < tree_size - 1; i++) {
                             TYPED(copyHamtNode)(new_trees[i]);
                         }
-                        TYPED(freeHamtNode)(node);
                         *node_ref = new_node;
                     }
                 } else if (allow_reuse) {
                     TYPED(freeHamtNode)(trees[idx]);
                     trees[idx] = new_tree;
+                    TYPED(copyHamtNode)(node);
                 } else {
                     TYPED(HamtNode)* new_node = TYPED(createHamtNode)(key_size, tree_size);
                     new_node->keymap = node->keymap;
@@ -509,7 +535,6 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
                             TYPED(copyHamtNode)(new_trees[i]);
                         }
                     }
-                    TYPED(freeHamtNode)(node);
                     *node_ref = new_node;
                 }
                 return true;
@@ -523,5 +548,16 @@ static bool TYPED(deleteFromHamtNode)(TYPED(HamtNode)** node_ref, KEY key, uint6
 }
 
 bool TYPED(deleteFromHamt)(TYPED(Hamt)* table, KEY key) {
-    return TYPED(deleteFromHamtNode)(&table->root, key, HASH(key), 0, true);
+    if (table->root == NULL) {
+        return false;
+    } else {
+        TYPED(HamtNode)* new_root = table->root;
+        if (TYPED(deleteFromHamtNode)(&new_root, key, HASH(key), 0, true)) {
+            TYPED(freeHamtNode)(table->root);
+            table->root = new_root;
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

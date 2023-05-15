@@ -4,7 +4,6 @@
 #undef TYPED
 #undef HASH
 #undef EQUALS
-#undef DEFAULT
 
 #include "../alloc-end.h"
 

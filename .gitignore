@@ -1,6 +1,7 @@
 
 .vscode
 .vim*
+tmp.*
 compile_flags.txt
 build/
 

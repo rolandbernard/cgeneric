@@ -16,7 +16,7 @@ otherwise including multiple concrete implementations will result in errors.
 
 If you use any of the data structures using hashes (e.g., hash-table or hash-set) you can also use
 the default hash functions in `src/hash.c`. In general however these are designed mainly just for
-the using in the test cases.
+use in the test cases.
 
 ## Development
 

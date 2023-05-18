@@ -44,7 +44,7 @@ typedef struct TYPED(HamtEntry) TYPED(HamtEntry);
 
 struct TYPED(HamtIterator) {
     TYPED(HamtNode)* path[16];
-    size_t offset;
+    size_t offset[16];
     size_t depth;
 };
 

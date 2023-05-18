@@ -561,3 +561,54 @@ bool TYPED(deleteFromHamt)(TYPED(Hamt)* table, KEY key) {
         }
     }
 }
+
+void TYPED(hamtIterAdvance)(TYPED(HamtIterator)* iter) {
+    if (iter->depth != SIZE_MAX) {
+        TYPED(HamtNode)* node = iter->path[iter->depth];
+        size_t key_size = TYPED(hamtNodeKeySize)(node);
+        size_t tree_size = TYPED(hamtNodeTreeSize)(node);
+        if (iter->offset[iter->depth] >= key_size + tree_size) {
+            if (iter->depth > 0) {
+                iter->depth -= 1;
+                iter->offset[iter->depth] += 1;
+                TYPED(hamtIterAdvance)(iter);
+            } else {
+                iter->depth = SIZE_MAX;
+            }
+        } else if (iter->offset[iter->depth] >= key_size) {
+            TYPED(HamtNode)** trees = TYPED(hamtNodeTrees)(node, key_size);
+            iter->offset[iter->depth + 1] = 0;
+            iter->path[iter->depth + 1] = trees[iter->offset[iter->depth] - key_size];
+            iter->depth += 1;
+            TYPED(hamtIterAdvance)(iter);
+        }
+    }
+}
+
+TYPED(HamtIterator) TYPED(getHamtIterator)(TYPED(Hamt)* table) {
+    TYPED(HamtIterator) iter = {
+        .path = { table->root },
+        .offset = { 0 },
+        .depth = 0,
+    };
+    TYPED(hamtIterAdvance)(&iter);
+    return iter;
+}
+
+bool TYPED(hasNextHamt)(TYPED(HamtIterator)* iter) {
+    return iter->depth != SIZE_MAX;
+}
+
+TYPED(HamtEntry) TYPED(getNextHamt)(TYPED(HamtIterator)* iter) {
+    TYPED(HamtNode)* node = iter->path[iter->depth];
+    size_t key_size = TYPED(hamtNodeKeySize)(node);
+    KEY* keys = TYPED(hamtNodeKeys)(node);
+    VALUE* values = TYPED(hamtNodeValues)(node, key_size);
+    TYPED(HamtEntry) entry = {
+        .key = keys[iter->offset[iter->depth]],
+        .value = values[iter->offset[iter->depth]],
+    };
+    iter->offset[iter->depth] += 1;
+    TYPED(hamtIterAdvance)(iter);
+    return entry;
+}
